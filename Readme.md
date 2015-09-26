@@ -1,5 +1,6 @@
 # libargon
-## Introduction
+A library for reading/writing PNM (PBM, PGM, PPM) and PFM images (and hopefully
+more...)
 
 ## Building libargon
 This project relies on `tup` for builds, you can get `tup` either through your
@@ -65,4 +66,3 @@ linker and loader have to be configured.
 Now it is possible to just call
 
     $ ./main
-## License
