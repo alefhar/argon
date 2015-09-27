@@ -4,7 +4,6 @@
 #include "ar/image.h"
 #include "ar/image_io.h"
 
-#include <iostream>
 #include <gtest/gtest.h>
 
 using image_d = argon::image<double>;
@@ -22,5 +21,15 @@ TEST (image_test, interpolate_linear_test)
     EXPECT_DOUBLE_EQ(2   , img.interpolate_linear(1., 1.));
 }
 
+TEST (image_test, read_image) 
+{
+    auto image = argon::image_io::read_ppm<float>("image.ppm");
+}
+
+TEST (image_test, write_image)
+{
+    argon::image<int> image(20, 20, 3);
+    argon::image_io::write("image.ppm", image, argon::pnm_type::PPM_BINARY);
+}
 
 #endif // AR_IMAGE_TEST_H_
