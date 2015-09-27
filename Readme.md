@@ -19,8 +19,22 @@ To build the project type
 into your terminal. `tup` then initializes its database for managing builds
 and then builds the library. The library is build to the directory `lib`. To
 install, simply copy the library and all headers to a location of your choice.
-You can also use the `Makefile` to install everything. The install path for
-the headers is `/usr/local/include`, the library is copied to `/usr/local/lib`.
+You can also use the `Makefile` to install everything. The install path is
+configurable by the variable 'PREFIX', that points to '/usr/local' by default:
+headers are copied to `/usr/local/include`, the library to `/usr/local/lib`.
+To change the default location, simply type
+
+    $ make install PREFIX=/your/install/dir
+
+To uninstall headers and library use the 'uninstall' target with the same
+prefix:
+
+    $ make uninstall PREFIX=/your/install/dir
+
+Note: When using the default installation directory root privileges might
+be necessary. Additionally, when you use the 'uninstall' target you should
+use the exact same prefix as for the 'install' target, otherwise bad things
+may happen.
 
 ### Requirements
 * tup for building
