@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <algorithm>
 #include <stdexcept>
 #include <cmath>
 
@@ -60,9 +61,14 @@ namespace argon
                 return static_cast<T>(val);
             }
 
-            int getWidth() const { return _width; }
-            int getHeight() const { return _height; }
-            int getNumChannels() const { return _channels; }
+            int get_width() const { return _width; }
+            int get_height() const { return _height; }
+            int get_num_channels() const { return _channels; }
+
+            T max_element() const
+            {
+                return *std::max_element(std::begin(_data), std::end(_data));
+            }
 
         public:
             
