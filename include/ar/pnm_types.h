@@ -3,6 +3,8 @@
 
 #include "ar/image.h"
 
+#include <iostream>
+
 namespace argon
 {
     enum class pnm_type : char
@@ -27,23 +29,52 @@ namespace argon
 
     struct pbm_header : pnm_header
     {
-        const int allowed_max = 1;
+        friend std::ostream& operator<<(std::ostream &out, const pbm_header &header)
+        {
+            out << 'P' << header.magic << '\n';
+            out << header.width << ' ' << header.height << '\n';
+
+            return out;
+        }
     };
 
     struct pgm_header : pnm_header
     {
-        const int allowed_max = 65535;
+        friend std::ostream& operator<<(std::ostream &out, const pgm_header &header)
+        {
+            out << 'P' << header.magic << '\n';
+            out << header.width << ' ' << header.height << '\n';
+            out << header.max << '\n';
+
+            return out;
+        }
     };
 
     struct ppm_header : pnm_header
     {
-        const int allowed_max = 65535;
+        friend std::ostream& operator<<(std::ostream &out, const ppm_header &header)
+        {
+            out << 'P' << header.magic << '\n';
+            out << header.width << ' ' << header.height << '\n';
+            out << header.max << '\n';
+
+            return out;
+        }
     };
 
     struct pfm_header : header_data
     {
         float endianess;
         float scale;
+
+        friend std::ostream& operator<<(std::ostream &out, const pfm_header &header)
+        {
+            out << 'P' << header.magic << '\n';
+            out << header.width << ' ' << header.height << '\n';
+            out << (header.endianess * header.scale) << '\n';
+
+            return out;
+        }
     };
 }
 

@@ -5,7 +5,10 @@
 #include "ar/pnm_types.h"
 
 #include <string>
+#include <iostream>
+#include <fstream>
 #include <stdexcept>
+#include <bitset>
 
 namespace argon
 {
@@ -109,18 +112,75 @@ namespace argon
             static void write_pbm( const std::string &filename, const image<T> &image, bool binary = false )
             {
                 auto header = get_pbm_header(image, binary);
+
+                std::ofstream out(filename, std::ios::out);
+                if (!out.is_open())
+                    throw std::runtime_error(std::string("Could not open " + filename));
+
+                out << header;
+
+                if (!binary)
+                {
+                    for (int y = 0; y < image.get_height(); ++y)
+                    {
+                        for (int x = 0; x < image.get_width(); ++x)
+                        {
+                            out << std::max(0, std::min(header.max, image(x,y))) << ' ';
+                        }
+                        out << '\n';
+                    }
+                }
             }
 
             template <typename T>
             static void write_pgm( const std::string &filename, const image<T> &image, bool binary = false )
             {
                 auto header = get_pgm_header(image, binary);
+                
+                std::ofstream out(filename, std::ios::out);
+                if (!out.is_open())
+                    throw std::runtime_error(std::string("Could not open " + filename));
+
+                out << header;
+                
+                if (!binary)
+                {
+                    for (int y = 0; y < image.get_height(); ++y)
+                    {
+                        for (int x = 0; x < image.get_width(); ++x)
+                        {
+                            out << std::max(0, std::min(header.max, image(x,y))) << ' ';
+                        }
+                        out << '\n';
+                    }
+                }
             }
 
             template <typename T>
             static void write_ppm( const std::string &filename, const image<T> &image, bool binary = false )
             {
                 auto header = get_ppm_header(image, binary);
+                
+                std::ofstream out(filename, std::ios::out);
+                if (!out.is_open())
+                    throw std::runtime_error(std::string("Could not open " + filename));
+
+                out << header;
+                
+                if (!binary)
+                {
+                    for (int y = 0; y < image.get_height(); ++y)
+                    {
+                        for (int x = 0; x < image.get_width(); ++x)
+                        {
+                            for (int c = 0; c < 3; ++c)
+                            {
+                                out << std::max(0, std::min(header.max, image(x,y,c))) << ' ';
+                            }
+                        }
+                        out << '\n';
+                    }
+                }
             }
 
             template <typename T>
@@ -144,8 +204,8 @@ namespace argon
                 
                 pbm_header header{};
                 header.magic  = static_cast<char>(type);
-                header.width  = image.getWidth();
-                header.height = image.getHeight();
+                header.width  = image.get_width();
+                header.height = image.get_height();
                 header.max    = 1;
                 header.bytes  = 1;
 
@@ -159,9 +219,9 @@ namespace argon
 
                 pgm_header header{};
                 header.magic  = static_cast<char>(type);
-                header.width  = image.getWidth();
-                header.height = image.getHeight();
-                header.max    = 255;
+                header.width  = image.get_width();
+                header.height = image.get_height();
+                header.max    = image.max_element() <= 255 ? 255 : 65535;
                 header.bytes  = header.max == 255 ? 1 : 2;
 
                 return header;
@@ -174,9 +234,9 @@ namespace argon
 
                 ppm_header header{};
                 header.magic  = static_cast<char>(type);
-                header.width  = image.getWidth();
-                header.height = image.getHeight();
-                header.max    = 255;
+                header.width  = image.get_width();
+                header.height = image.get_height();
+                header.max    = image.max_element() <= 255 ? 255 : 65535;
                 header.bytes  = header.max == 255 ? 1 : 2;
 
                 return header;
@@ -185,12 +245,12 @@ namespace argon
             template <typename T>
             static pfm_header get_pfm_header( const image<T> &image )
             {
-                pnm_type type = image.getNumChannels() == 1 ? pnm_type::PFM_SINGLE : pnm_type::PFM_TRIPLE;
+                pnm_type type = image.get_num_channels() == 1 ? pnm_type::PFM_SINGLE : pnm_type::PFM_TRIPLE;
 
                 pfm_header header{};
                 header.magic     = static_cast<char>(type);
-                header.width     = image.getWidth();
-                header.height    = image.getHeight();
+                header.width     = image.get_width();
+                header.height    = image.get_height();
                 header.endianess = -1.f;
                 header.scale     =  1.f;
 
