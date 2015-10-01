@@ -28,8 +28,26 @@ TEST (image_test, read_image)
 
 TEST (image_test, write_image)
 {
-    argon::image<int> image(20, 20, 3);
-    argon::image_io::write("image.ppm", image, argon::pnm_type::PPM_BINARY);
+    argon::image<int> pbm_image(20, 20);
+    pbm_image( 9, 9) = 1;
+    pbm_image(10,10) = 1;
+    pbm_image( 9,10) = 1;
+    pbm_image(10, 9) = 1;
+    argon::image_io::write("image.pbm", pbm_image, argon::pnm_type::PBM_ASCII);
+
+    argon::image<int> pgm_image(20, 20);
+    pgm_image( 9, 9) = 128;
+    pgm_image(10,10) = 128;
+    pgm_image( 9,10) = 128;
+    pgm_image(10, 9) = 128;
+    argon::image_io::write("image.pgm", pgm_image, argon::pnm_type::PGM_ASCII);
+
+    argon::image<int> ppm_image(20, 20, 3);
+    ppm_image( 9, 9,0) = 128; ppm_image( 9, 9,1) = 64; ppm_image( 9, 9,2) = 255;
+    ppm_image(10,10,0) = 128; ppm_image(10,10,1) = 64; ppm_image(10,10,2) = 255;
+    ppm_image( 9,10,0) = 128; ppm_image( 9,10,1) = 64; ppm_image( 9,10,2) = 255;
+    ppm_image(10, 9,0) = 128; ppm_image(10, 9,1) = 64; ppm_image(10, 9,2) = 255;
+    argon::image_io::write("image.ppm", ppm_image, argon::pnm_type::PPM_ASCII);
 }
 
 #endif // AR_IMAGE_TEST_H_
