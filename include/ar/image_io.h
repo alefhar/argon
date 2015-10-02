@@ -131,7 +131,7 @@ namespace argon
                     {
                         for (int x = 0; x < image.get_width(); ++x)
                         {
-                            out << std::max(0, std::min(header.max, image(x,y))) << ' ';
+                            out << clamp(image(x,y), header.max) << ' ';
                         }
                         out << '\n';
                     }
@@ -147,16 +147,13 @@ namespace argon
                         int written = 0;
                         for (int x = 0; x < image.get_width() - 7; x += 8)
                         {
+                            int shift = 7;
                             std::uint8_t packed = 0;
-                            packed |= image(x  ,y) << 7;
-                            packed |= image(x+1,y) << 6;
-                            packed |= image(x+2,y) << 5;
-                            packed |= image(x+3,y) << 4;
-                            packed |= image(x+4,y) << 3;
-                            packed |= image(x+5,y) << 2;
-                            packed |= image(x+6,y) << 1;
-                            packed |= image(x+7,y) << 0;
-
+                            for (int b = 0; b < 8; ++b)
+                            {
+                                packed |= clamp(image(x+b,y), header.max) << shift;
+                                --shift;
+                            }
                             out << packed;
                             written += 8;
                         }
@@ -167,11 +164,11 @@ namespace argon
                         int remaining = image.get_width() - written;
                         if (remaining > 0)
                         {
-                            std::uint8_t packed = 0;
                             int shift = 7;
-                            for (int x = written; x < image.get_width(); ++x)
+                            std::uint8_t packed = 0;
+                            for (int b = 0; b < remaining; ++b)
                             {
-                                packed |= image(x,y) << shift;
+                                packed |= clamp(image(written+b,y), header.max) << shift;
                                 --shift;
                             }
                             out << packed;
@@ -185,7 +182,13 @@ namespace argon
             {
                 auto header = get_pgm_header(image, binary);
                 
-                std::ofstream out(filename, std::ios::out);
+                auto mode = std::ios::out;
+                if (binary)
+                {
+                    mode |= std::ios::binary;
+                }
+
+                std::ofstream out(filename, mode);
                 if (!out.is_open())
                     throw std::runtime_error(std::string("Could not open " + filename));
 
@@ -197,7 +200,7 @@ namespace argon
                     {
                         for (int x = 0; x < image.get_width(); ++x)
                         {
-                            out << std::max(0, std::min(header.max, image(x,y))) << ' ';
+                            out << clamp(image(x,y), header.max) << ' ';
                         }
                         out << '\n';
                     }
@@ -209,7 +212,13 @@ namespace argon
             {
                 auto header = get_ppm_header(image, binary);
                 
-                std::ofstream out(filename, std::ios::out);
+                auto mode = std::ios::out;
+                if (binary)
+                {
+                    mode |= std::ios::binary;
+                }
+
+                std::ofstream out(filename, mode);
                 if (!out.is_open())
                     throw std::runtime_error(std::string("Could not open " + filename));
 
@@ -223,7 +232,7 @@ namespace argon
                         {
                             for (int c = 0; c < 3; ++c)
                             {
-                                out << std::max(0, std::min(header.max, image(x,y,c))) << ' ';
+                                out << clamp(image(x,y,c), header.max) << ' ';
                             }
                         }
                         out << '\n';
@@ -303,6 +312,12 @@ namespace argon
                 header.scale     =  1.f;
 
                 return header;
+            }
+
+            template <typename T>
+            static T clamp(T val, T max)
+            {
+                return std::max(0, std::min(val, max));
             }
     };
 }

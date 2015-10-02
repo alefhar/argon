@@ -30,10 +30,9 @@ TEST (image_test, write_image)
 {
     argon::image<int> pbm_image(20, 20);
     pbm_image( 9, 9) = 1;
-    pbm_image(10,10) = 1;
-    pbm_image( 9,10) = 1;
+    pbm_image(10,10) = 5;
+    pbm_image( 9,10) = 5;
     pbm_image(10, 9) = 1;
-    pbm_image(19,18) = 0;
     argon::image_io::write("image.pbm", pbm_image, argon::pnm_type::PBM_ASCII);
     argon::image_io::write("image_binary.pbm", pbm_image, argon::pnm_type::PBM_BINARY);
 
