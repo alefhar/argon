@@ -113,7 +113,13 @@ namespace argon
             {
                 auto header = get_pbm_header(image, binary);
 
-                std::ofstream out(filename, std::ios::out);
+                auto mode = std::ios::out;
+                if (binary)
+                {
+                    mode |= std::ios::binary;
+                }
+
+                std::ofstream out(filename, mode);
                 if (!out.is_open())
                     throw std::runtime_error(std::string("Could not open " + filename));
 
@@ -128,6 +134,48 @@ namespace argon
                             out << std::max(0, std::min(header.max, image(x,y))) << ' ';
                         }
                         out << '\n';
+                    }
+                }
+                else
+                {
+                    for (int y = 0; y < image.get_height(); ++y)
+                    {
+                        // Binary PBM images store each pixel as one bit,
+                        // with eight pixels packed into one byte;
+                        // The left-most pixel is the most significant
+                        // bit in the byte.
+                        int written = 0;
+                        for (int x = 0; x < image.get_width() - 7; x += 8)
+                        {
+                            std::uint8_t packed = 0;
+                            packed |= image(x  ,y) << 7;
+                            packed |= image(x+1,y) << 6;
+                            packed |= image(x+2,y) << 5;
+                            packed |= image(x+3,y) << 4;
+                            packed |= image(x+4,y) << 3;
+                            packed |= image(x+5,y) << 2;
+                            packed |= image(x+6,y) << 1;
+                            packed |= image(x+7,y) << 0;
+
+                            out << packed;
+                            written += 8;
+                        }
+
+                        // If length isn't divisible by eight, pack
+                        // remaining pixels into a last byte and fill
+                        // with zeros.
+                        int remaining = image.get_width() - written;
+                        if (remaining > 0)
+                        {
+                            std::uint8_t packed = 0;
+                            int shift = 7;
+                            for (int x = written; x < image.get_width(); ++x)
+                            {
+                                packed |= image(x,y) << shift;
+                                --shift;
+                            }
+                            out << packed;
+                        }
                     }
                 }
             }
