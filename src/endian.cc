@@ -53,8 +53,12 @@ namespace argon
         f[1] = b[2];
         f[2] = b[1];
         f[3] = b[0];
-        
-        return *reinterpret_cast<float *>(&f[0]);
+
+        // GCC displays a message that the cast from
+        // &f[0] violates strict aliasing, so an
+        // intermediate step is necessary.
+        std::uint8_t *f_ptr = &f[0];        
+        return *reinterpret_cast<float *>(f_ptr);
     }
 
     float no_swap(float value)
