@@ -24,4 +24,4 @@ uninstall:
 	@rmdir -v $(HEADER_INSTALL_DIR)
 
 test: all
-	@./test_suite
+	@LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PWD}/lib ./test_suite

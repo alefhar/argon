@@ -39,7 +39,7 @@ may happen.
 ### Requirements
 * tup for building
 * make for installing (optional)
-* a C++14 compliant compiler like GCC 4.9 or clang 3.5
+* a C++14 compliant compiler like GCC 5.0 or clang 3.4
 
 ## Using libargon
 If you installed the headers and library to their default directories you include
