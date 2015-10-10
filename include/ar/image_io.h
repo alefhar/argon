@@ -132,7 +132,7 @@ namespace argon
                     {
                         for (int x = 0; x < image.get_width(); ++x)
                         {
-                            out << clamp(image(x,y), header.max) << ' ';
+                            out << clamp8(image(x,y), header.max) << ' ';
                         }
                         out << '\n';
                     }
@@ -152,7 +152,7 @@ namespace argon
                             std::uint8_t packed = 0;
                             for (int b = 0; b < 8; ++b)
                             {
-                                packed |= clamp(image(x+b,y), header.max) << shift;
+                                packed |= clamp8(image(x+b,y), header.max) << shift;
                                 --shift;
                             }
                             out << packed;
@@ -169,7 +169,7 @@ namespace argon
                             std::uint8_t packed = 0;
                             for (int b = 0; b < remaining; ++b)
                             {
-                                packed |= clamp(image(written+b,y), header.max) << shift;
+                                packed |= clamp8(image(written+b,y), header.max) << shift;
                                 --shift;
                             }
                             out << packed;
@@ -201,7 +201,7 @@ namespace argon
                     {
                         for (int x = 0; x < image.get_width(); ++x)
                         {
-                            out << clamp(image(x,y), header.max) << ' ';
+                            out << clamp16(image(x,y), header.max) << ' ';
                         }
                         out << '\n';
                     }
@@ -216,7 +216,7 @@ namespace argon
                         {
                             for (int x = 0; x < image.get_width(); ++x)
                             {
-                                std::uint16_t clamped = clamp(image(x,y), header.max);
+                                std::uint16_t clamped = clamp16(image(x,y), header.max);
                                 if (byte_order == endian::LITTLE)
                                     clamped = swap(clamped);
 
@@ -231,7 +231,7 @@ namespace argon
                         {
                             for (int x = 0; x < image.get_width(); ++x)
                             {
-                                std::uint8_t clamped = clamp(image(x,y), header.max);
+                                std::uint8_t clamped = clamp8(image(x,y), header.max);
                                 out << clamped;
                             }
                         }
@@ -267,7 +267,7 @@ namespace argon
                         {
                             for (int c = 0; c < 3; ++c)
                             {
-                                out << clamp(image(x,y,c), header.max) << ' ';
+                                out << clamp16(image(x,y,c), header.max) << ' ';
                             }
                         }
                         out << '\n';
@@ -285,7 +285,7 @@ namespace argon
                             {
                                 for (int c = 0; c < image.get_num_channels(); ++c)
                                 {
-                                    std::uint16_t clamped = clamp(image(x,y,c), header.max);
+                                    std::uint16_t clamped = clamp16(image(x,y,c), header.max);
                                     if (byte_order == endian::LITTLE)
                                         clamped = swap(clamped);
 
@@ -303,7 +303,7 @@ namespace argon
                             {
                                 for (int c = 0; c < image.get_num_channels(); ++c)
                                 {
-                                    std::uint8_t clamped = clamp(image(x,y,c), header.max);
+                                    std::uint8_t clamped = clamp8(image(x,y,c), header.max);
                                     out << clamped;
                                 }
                             }
@@ -315,7 +315,35 @@ namespace argon
             template <typename T>
             static void write_pfm( const std::string &filename, const image<T> &image )
             {
+                if (image.get_num_channels() != 3 && image.get_num_channels() != 1)
+                    throw std::invalid_argument("Image must have exactly one or three channels");
+
                 auto header = get_pfm_header(image);
+                
+                auto mode = std::ios::out | std::ios::binary;
+                std::ofstream out(filename, mode);
+                if (!out.is_open())
+                    throw std::runtime_error(std::string("Could not open " + filename));
+
+                out << header;
+
+                auto byte_order = endianess();
+
+                for (int y = 0; y < image.get_height(); ++y)
+                {
+                    for (int x = 0; x < image.get_width(); ++x)
+                    {
+                        for (int c = 0; c < image.get_num_channels(); ++c)
+                        {
+                            float pixel = image(x,y,c);
+                            if (byte_order == endian::BIG)
+                                pixel = swap(pixel);
+
+                            char * bytes = reinterpret_cast<char*>(&pixel);
+                            out << bytes[0] << bytes[1] << bytes[2] << bytes[3];
+                        }
+                    }
+                }
             }
             
         private:
@@ -386,10 +414,18 @@ namespace argon
                 return header;
             }
 
-            template <typename T>
-            static T clamp(T val, T max)
+            template <typename T, typename M>
+            static std::uint8_t clamp8( T val, M max )
             {
-                return std::max(0, std::min(val, max));
+                T max_val = static_cast<T>(max);
+                return static_cast<std::uint8_t>(std::max(T{0}, std::min(val, max_val)));
+            }
+
+            template <typename T, typename M>
+            static std::uint16_t clamp16( T val, M max )
+            {
+                T max_val = static_cast<T>(max);
+                return static_cast<std::uint16_t>(std::max(T{0}, std::min(val, max_val)));
             }
     };
 }
