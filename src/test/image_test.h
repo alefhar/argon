@@ -52,11 +52,19 @@ TEST (image_test, write_image)
     argon::image_io::write("image_wide_binary.pgm", pgm_image_wide, argon::pnm_type::PGM_BINARY);
 
     argon::image<int> ppm_image(20, 20, 3);
+    argon::image<int> ppm_image_wide(20, 20, 3);
     ppm_image( 9, 9,0) = 128; ppm_image( 9, 9,1) = 64; ppm_image( 9, 9,2) = 255;
     ppm_image(10,10,0) = 128; ppm_image(10,10,1) = 64; ppm_image(10,10,2) = 255;
     ppm_image( 9,10,0) = 128; ppm_image( 9,10,1) = 64; ppm_image( 9,10,2) = 255;
     ppm_image(10, 9,0) = 128; ppm_image(10, 9,1) = 64; ppm_image(10, 9,2) = 255;
+    ppm_image_wide( 9, 9,0) = 32767; ppm_image_wide( 9, 9,1) = 16383; ppm_image_wide( 9, 9,2) = 65535;
+    ppm_image_wide(10,10,0) = 32767; ppm_image_wide(10,10,1) = 16383; ppm_image_wide(10,10,2) = 65535;
+    ppm_image_wide( 9,10,0) = 32767; ppm_image_wide( 9,10,1) = 16383; ppm_image_wide( 9,10,2) = 65535;
+    ppm_image_wide(10, 9,0) = 32767; ppm_image_wide(10, 9,1) = 16383; ppm_image_wide(10, 9,2) = 65535;
     argon::image_io::write("image.ppm", ppm_image, argon::pnm_type::PPM_ASCII);
+    argon::image_io::write("image_binary.ppm", ppm_image, argon::pnm_type::PPM_BINARY);
+    argon::image_io::write("image_wide.ppm", ppm_image_wide, argon::pnm_type::PPM_ASCII);
+    argon::image_io::write("image_wide_binary.ppm", ppm_image_wide, argon::pnm_type::PPM_BINARY);
 }
 
 #endif // AR_IMAGE_TEST_H_

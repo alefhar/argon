@@ -242,6 +242,9 @@ namespace argon
             template <typename T>
             static void write_ppm( const std::string &filename, const image<T> &image, bool binary = false )
             {
+                if (image.get_num_channels() != 3)
+                    throw std::invalid_argument("Image must have exactly three channels");
+
                 auto header = get_ppm_header(image, binary);
                 
                 auto mode = std::ios::out;
@@ -268,6 +271,43 @@ namespace argon
                             }
                         }
                         out << '\n';
+                    }
+                }
+                else
+                {
+                    if (header.bytes == 2)
+                    {
+                        auto byte_order = endianess();
+
+                        for (int y = 0; y < image.get_height(); ++y)
+                        {
+                            for (int x = 0; x < image.get_width(); ++x)
+                            {
+                                for (int c = 0; c < image.get_num_channels(); ++c)
+                                {
+                                    std::uint16_t clamped = clamp(image(x,y,c), header.max);
+                                    if (byte_order == endian::LITTLE)
+                                        clamped = swap(clamped);
+
+                                    char *bytes = reinterpret_cast<char *>(&clamped);
+                                    out << bytes[0] << bytes[1];
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int y = 0; y < image.get_height(); ++y)
+                        {
+                            for (int x = 0; x < image.get_width(); ++x)
+                            {
+                                for (int c = 0; c < image.get_num_channels(); ++c)
+                                {
+                                    std::uint8_t clamped = clamp(image(x,y,c), header.max);
+                                    out << clamped;
+                                }
+                            }
+                        }
                     }
                 }
             }
