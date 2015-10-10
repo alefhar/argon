@@ -3,6 +3,7 @@
 
 #include "ar/image.h"
 #include "ar/pnm_types.h"
+#include "ar/endian.h"
 
 #include <string>
 #include <iostream>
@@ -203,6 +204,37 @@ namespace argon
                             out << clamp(image(x,y), header.max) << ' ';
                         }
                         out << '\n';
+                    }
+                }
+                else
+                {
+                    if (header.bytes == 2)
+                    {
+                        auto byte_order = endianess();
+                        
+                        for (int y = 0; y < image.get_height(); ++y)
+                        {
+                            for (int x = 0; x < image.get_width(); ++x)
+                            {
+                                std::uint16_t clamped = clamp(image(x,y), header.max);
+                                if (byte_order == endian::LITTLE)
+                                    clamped = swap(clamped);
+
+                                char *bytes = reinterpret_cast<char *>(&clamped);
+                                out << bytes[0] << bytes[1];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int y = 0; y < image.get_height(); ++y)
+                        {
+                            for (int x = 0; x < image.get_width(); ++x)
+                            {
+                                std::uint8_t clamped = clamp(image(x,y), header.max);
+                                out << clamped;
+                            }
+                        }
                     }
                 }
             }

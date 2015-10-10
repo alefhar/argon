@@ -37,11 +37,19 @@ TEST (image_test, write_image)
     argon::image_io::write("image_binary.pbm", pbm_image, argon::pnm_type::PBM_BINARY);
 
     argon::image<int> pgm_image(20, 20);
+    argon::image<int> pgm_image_wide(20, 20);
     pgm_image( 9, 9) = 128;
     pgm_image(10,10) = 128;
     pgm_image( 9,10) = 128;
     pgm_image(10, 9) = 128;
+    pgm_image_wide( 9, 9) = 32767;
+    pgm_image_wide(10,10) = 32767;
+    pgm_image_wide( 9,10) = 32767;
+    pgm_image_wide(10, 9) = 32767;
     argon::image_io::write("image.pgm", pgm_image, argon::pnm_type::PGM_ASCII);
+    argon::image_io::write("image_binary.pgm", pgm_image, argon::pnm_type::PGM_BINARY);
+    argon::image_io::write("image_wide.pgm", pgm_image_wide, argon::pnm_type::PGM_ASCII);
+    argon::image_io::write("image_wide_binary.pgm", pgm_image_wide, argon::pnm_type::PGM_BINARY);
 
     argon::image<int> ppm_image(20, 20, 3);
     ppm_image( 9, 9,0) = 128; ppm_image( 9, 9,1) = 64; ppm_image( 9, 9,2) = 255;
