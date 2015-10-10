@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "image_test.h"
+#include "pnm_header_test.h"
 #include "endian_test.h"
 
 int main(int argc, char **argv)
