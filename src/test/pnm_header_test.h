@@ -24,46 +24,46 @@ TEST (pnm_header_test, pbm_test)
 
     sstream.str(testee1);
     sstream >> header;
-    ASSERT_EQ('1', header.magic);
-    ASSERT_EQ( 5 , header.width);
-    ASSERT_EQ( 7 , header.height);
+    EXPECT_EQ('1', header.magic);
+    EXPECT_EQ( 5 , header.width);
+    EXPECT_EQ( 7 , header.height);
 
     sstream.str(testee2);
     sstream >> header;
-    ASSERT_EQ('4', header.magic);
-    ASSERT_EQ( 7 , header.width);
-    ASSERT_EQ( 9 , header.height);
+    EXPECT_EQ('4', header.magic);
+    EXPECT_EQ( 7 , header.width);
+    EXPECT_EQ( 9 , header.height);
 
     sstream.str(testee3);
     sstream >> header;
-    ASSERT_EQ('1', header.magic);
-    ASSERT_EQ( 1 , header.width);
-    ASSERT_EQ( 3 , header.height);
+    EXPECT_EQ('1', header.magic);
+    EXPECT_EQ( 1 , header.width);
+    EXPECT_EQ( 3 , header.height);
 
     sstream.str(testee4);
     sstream >> header;
-    ASSERT_EQ('1', header.magic);
-    ASSERT_EQ( 3 , header.width);
-    ASSERT_EQ( 2 , header.height);
+    EXPECT_EQ('1', header.magic);
+    EXPECT_EQ( 3 , header.width);
+    EXPECT_EQ( 2 , header.height);
 
     sstream.str(testee5);
     sstream >> header;
-    ASSERT_EQ('4', header.magic);
-    ASSERT_EQ( 1 , header.width);
-    ASSERT_EQ( 3 , header.height);
+    EXPECT_EQ('4', header.magic);
+    EXPECT_EQ( 1 , header.width);
+    EXPECT_EQ( 3 , header.height);
 
     sstream.str(testee6);
     sstream >> header;
-    ASSERT_EQ('1', header.magic);
-    ASSERT_EQ( 3 , header.width);
-    ASSERT_EQ( 5 , header.height);
+    EXPECT_EQ('1', header.magic);
+    EXPECT_EQ( 3 , header.width);
+    EXPECT_EQ( 5 , header.height);
 
     sstream.str(testee7);
     sstream >> header;
-    ASSERT_EQ('1', header.magic);
-    ASSERT_EQ( 2 , header.width);
-    ASSERT_EQ( 3 , header.height);
-    ASSERT_EQ( 7 , sstream.tellg());
+    EXPECT_EQ('1', header.magic);
+    EXPECT_EQ( 2 , header.width);
+    EXPECT_EQ( 3 , header.height);
+    EXPECT_EQ( 7 , sstream.tellg());
 }
 
 #endif // AR_PNM_HEADER_TEST_H

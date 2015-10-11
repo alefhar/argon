@@ -20,6 +20,11 @@ namespace argon
                 : current_state(state::START)
             {}
 
+            void reset()
+            {
+                current_state = state::START;
+            }
+
             std::istream& parse_pbm_header( std::istream &in, pbm_header &header );
 
             std::istream& parse_pgm_header( std::istream &in, pgm_header &header );
@@ -30,17 +35,19 @@ namespace argon
 
         private:
 
+            std::istream& parse_pgm_ppm_header( std::istream &in, pnm_header &header );
+
             bool consume_whitespace( std::istream &in );
 
             bool consume_comment( std::istream &in );
 
             void filter( std::istream &in);
 
-            void consume_magic( std::istream &in, pnm_header &header );
+            void consume_magic( std::istream &in, header_data &header );
 
-            void consume_width( std::istream &in, pnm_header &header );
+            void consume_width( std::istream &in, header_data &header );
 
-            void consume_height( std::istream &in, pnm_header &header );
+            void consume_height( std::istream &in, header_data &header );
 
             void consume_max( std::istream &in, pnm_header &header );
 

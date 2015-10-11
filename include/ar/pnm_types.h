@@ -18,61 +18,66 @@ namespace argon
 
     struct header_data
     {
-        char magic;
-        int  width;
-        int  height;
+        public:
+            char magic;
+            int  width;
+            int  height;
+
+        protected:
+            virtual void check();
     };
 
     struct pnm_header : header_data
     {
-        int max;
-        int bytes;
+        public:
+            int max;
+            int bytes;
+
+        protected:
+            virtual void check();
     };
 
-    struct pbm_header : pnm_header
+    struct pbm_header : header_data
     {
-        friend std::ostream& operator<<( std::ostream &out, const pbm_header &header );
-        
-        friend std::istream& operator>>( std::istream &in, pbm_header &header);
+        public:
+            int max;
+
+            friend std::ostream& operator<<( std::ostream &out, const pbm_header &header );       
+            friend std::istream& operator>>( std::istream &in, pbm_header &header);
+
+        protected:
+            virtual void check();
     };
 
     struct pgm_header : pnm_header
     {
-        friend std::ostream& operator<<( std::ostream &out, const pgm_header &header )
-        {
-            out << 'P' << header.magic << '\n';
-            out << header.width << ' ' << header.height << '\n';
-            out << header.max << '\n';
+        friend std::ostream& operator<<( std::ostream &out, const pgm_header &header );
+        friend std::istream& operator>>( std::istream &in, pgm_header &header);
 
-            return out;
-        }
+        protected:
+            virtual void check();
     };
 
     struct ppm_header : pnm_header
     {
-        friend std::ostream& operator<<( std::ostream &out, const ppm_header &header )
-        {
-            out << 'P' << header.magic << '\n';
-            out << header.width << ' ' << header.height << '\n';
-            out << header.max << '\n';
+        friend std::ostream& operator<<( std::ostream &out, const ppm_header &header );
+        friend std::istream& operator>>( std::istream &in, ppm_header &header);
 
-            return out;
-        }
+        protected:
+            virtual void check();
     };
 
     struct pfm_header : header_data
     {
-        float endianess;
-        float scale;
+        public:
+            float endianess;
+            float scale;
 
-        friend std::ostream& operator<<( std::ostream &out, const pfm_header &header )
-        {
-            out << 'P' << header.magic << '\n';
-            out << header.width << ' ' << header.height << '\n';
-            out << (header.endianess * header.scale) << '\n';
+            friend std::ostream& operator<<( std::ostream &out, const pfm_header &header );
+            friend std::istream& operator>>( std::istream &in, pfm_header &header );
 
-            return out;
-        }
+        protected:
+            virtual void check();
     };
 }
 
