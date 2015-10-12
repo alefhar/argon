@@ -363,8 +363,6 @@ namespace argon
                 header.magic  = static_cast<char>(type);
                 header.width  = image.get_width();
                 header.height = image.get_height();
-                header.max    = 1;
-                header.bytes  = 1;
 
                 return header;
             }
