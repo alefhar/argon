@@ -7,9 +7,6 @@ namespace argon
 {
     void header_data::check()
     {
-        if (magic != '1' && magic != '4')
-            throw std::runtime_error("Unable to parse header, wrong magic number.");
-
         if (width <= 0)
             throw std::runtime_error("Unable to parse header, invalid width.");
 
@@ -21,7 +18,7 @@ namespace argon
     {
         header_data::check();
 
-        if (max <= 0 || max >= 65535)
+        if (max <= 0 || max > 65535)
             throw std::runtime_error("Unable to parse header, invalid maximum.");
     }
 
@@ -31,7 +28,7 @@ namespace argon
 
         pnm_type type = static_cast<pnm_type>(magic);
         if (type != pnm_type::PBM_ASCII && type != pnm_type::PBM_BINARY)
-            throw std::runtime_error("Unable to parse header, invalid type.");
+            throw std::runtime_error("Unable to parse header, invalid PBM magic.");
     }
 
     void pgm_header::check()
@@ -40,7 +37,7 @@ namespace argon
 
         pnm_type type = static_cast<pnm_type>(magic);
         if (type != pnm_type::PGM_ASCII && type != pnm_type::PGM_BINARY)
-            throw std::runtime_error("Unable to parse header, invalid type.");
+            throw std::runtime_error("Unable to parse header, invalid PGM magic.");
     }
 
     void ppm_header::check()
@@ -49,7 +46,7 @@ namespace argon
 
         pnm_type type = static_cast<pnm_type>(magic);
         if (type != pnm_type::PPM_ASCII && type != pnm_type::PPM_BINARY)
-            throw std::runtime_error("Unable to parse header, invalid type.");
+            throw std::runtime_error("Unable to parse header, invalid PPM magic.");
     }
 
     void pfm_header::check()
@@ -58,7 +55,7 @@ namespace argon
         
         pnm_type type = static_cast<pnm_type>(magic);
         if (type != pnm_type::PFM_SINGLE && type != pnm_type::PFM_TRIPLE)
-            throw std::runtime_error("Unable to parse header, invalid type.");
+            throw std::runtime_error("Unable to parse header, invalid PFM magic.");
 
         if (endianess != 1.f && endianess != -1.f)
             throw std::runtime_error("Unable to parse header, invalid endianess.");

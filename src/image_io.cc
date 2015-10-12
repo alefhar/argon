@@ -45,6 +45,7 @@ namespace argon
            throw std::runtime_error("Could not open " + filename);
         
         ppm_header header;
+        in >> header;
         return header;
     }
 
