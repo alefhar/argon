@@ -47,7 +47,39 @@ namespace argon
             static image<T> read_pbm( const std::string &filename )
             {
                 auto header = read_pbm_header(filename);
+
+                auto type = static_cast<pnm_type>(header.magic);
+                auto mode = std::ios::in;
+                if (type == pnm_type::PBM_BINARY)
+                {
+                    mode |= std::ios::binary;
+                }
+                
+                std::ifstream in(filename, mode);
+                if (!in.is_open())
+                    throw std::runtime_error(std::string("Could not open " + filename));
+                
                 image<T> img(header.width, header.height);
+                if (type == pnm_type::PBM_ASCII)
+                {
+                    T val;
+                    for (int y = 0; y < img.get_height(); ++y)
+                    {
+                        for (int x = 0; x < img.get_width(); ++x)
+                        {
+                            if (!in.good())
+                                throw std::runtime_error(std::string("Error reading image " + filename));
+                            
+                            in >> val;       
+                            img(x,y) = clamp8(val, header.max);
+                        }
+                    }
+
+                }
+                else
+                {
+
+                }
 
                 return img; 
             }
@@ -56,7 +88,41 @@ namespace argon
             static image<T> read_pgm( const std::string &filename )
             {
                 auto header = read_pgm_header(filename);
+
+                auto type = static_cast<pnm_type>(header.magic);
+                auto mode = std::ios::in;
+                if (type == pnm_type::PGM_BINARY)
+                {
+                    mode |= std::ios::binary;
+                }
+                
+                std::ifstream in(filename, mode);
+                if (!in.is_open())
+                    throw std::runtime_error(std::string("Could not open " + filename));
+                
                 image<T> img(header.width, header.height);
+                if (type == pnm_type::PGM_ASCII)
+                {
+                    T val;
+                    for (int y = 0; y < img.get_height(); ++y)
+                    {
+                        for (int x = 0; x < img.get_width(); ++x)
+                        {
+                            if (!in.good())
+                                throw std::runtime_error(std::string("Error reading image " + filename));
+                            
+                            in >> val;
+                            if (header.bytes == 1)
+                                img(x,y) = clamp8(val, header.max);
+                            else
+                                img(x,y) = clamp16(val, header.max);
+                        }
+                    }
+                }
+                else
+                {
+
+                }
 
                 return img; 
             }
@@ -65,7 +131,27 @@ namespace argon
             static image<T> read_ppm( const std::string &filename )
             {
                 auto header = read_ppm_header(filename);
-                image<T> img(header.width, header.height);
+                
+                auto type = static_cast<pnm_type>(header.magic);
+                auto mode = std::ios::in;
+                if (type == pnm_type::PPM_BINARY)
+                {
+                    mode |= std::ios::binary;
+                }
+                
+                std::ifstream in(filename, mode);
+                if (!in.is_open())
+                    throw std::runtime_error(std::string("Could not open " + filename));
+                
+                image<T> img(header.width, header.height, 3);
+                if (type == pnm_type::PPM_ASCII)
+                {
+
+                }
+                else
+                {
+
+                }
 
                 return img; 
             }
