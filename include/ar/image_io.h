@@ -121,7 +121,7 @@ namespace argon
                 }
                 else
                 {
-
+                    
                 }
 
                 return img; 
@@ -146,7 +146,24 @@ namespace argon
                 image<T> img(header.width, header.height, 3);
                 if (type == pnm_type::PPM_ASCII)
                 {
+                    T val;
+                    for (int y = 0; y < img.get_height(); ++y)
+                    {
+                        for (int x = 0; x < img.get_width(); ++x)
+                        {
+                            for (int c = 0; c < img.get_num_channels(); ++c)
+                            {
+                                if (!in.good())
+                                    throw std::runtime_error(std::string("Error reading image " + filename));
 
+                                in >> val;
+                                if (header.bytes == 1)
+                                    img(x,y,c) = clamp8(val, header.max);
+                                else
+                                    img(x,y,c) = clamp16(val, header.max);
+                            }
+                        }
+                    }
                 }
                 else
                 {
