@@ -8,8 +8,9 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <iterator>
+#include <cmath>
 #include <stdexcept>
-#include <bitset>
 
 namespace argon
 {
@@ -126,55 +127,50 @@ namespace argon
 
                 out << header;
 
+                auto width  = image.get_width();
+                auto height = image.get_height();
+
                 if (!binary)
                 {
-                    for (int y = 0; y < image.get_height(); ++y)
+                    for (int y = 0; y < height; ++y)
                     {
-                        for (int x = 0; x < image.get_width(); ++x)
+                        for (int x = 0; x < width; ++x)
                         {
-                            out << clamp8(image(x,y), header.max) << ' ';
+                            out << clamp16(image(x,y), header.max) << ' ';
                         }
                         out << '\n';
                     }
                 }
                 else
                 {
-                    for (int y = 0; y < image.get_height(); ++y)
+                    int num_bits = 8;
+                    int bytes_per_row = (width & 0x7) == 0 ? width / num_bits : width / num_bits + 1;
+                    std::vector<std::uint8_t> binary_data(bytes_per_row * width);
+
+                    int ptr = 0;
+                    for (int y = 0; y < height; ++y)
                     {
                         // Binary PBM images store each pixel as one bit,
                         // with eight pixels packed into one byte;
                         // The left-most pixel is the most significant
                         // bit in the byte.
-                        int written = 0;
-                        for (int x = 0; x < image.get_width() - 7; x += 8)
+                        int x = 0;
+                        for (int b = 0; b < bytes_per_row; ++b)
                         {
                             int shift = 7;
                             std::uint8_t packed = 0;
-                            for (int b = 0; b < 8; ++b)
+                            for (int i = 0; i < 8 && x < width; ++i, ++x)
                             {
-                                packed |= clamp8(image(x+b,y), header.max) << shift;
-                                --shift;
+                                packed |= clamp8(image(x,y), header.max) << shift;
+                                --shift;   
                             }
-                            out << packed;
-                            written += 8;
-                        }
 
-                        // If length isn't divisible by eight, pack
-                        // remaining pixels into a last byte and fill
-                        // with zeros.
-                        int remaining = image.get_width() - written;
-                        if (remaining > 0)
-                        {
-                            int shift = 7;
-                            std::uint8_t packed = 0;
-                            for (int b = 0; b < remaining; ++b)
-                            {
-                                packed |= clamp8(image(written+b,y), header.max) << shift;
-                                --shift;
-                            }
-                            out << packed;
+                            binary_data[ptr] = packed;
+                            ++ptr;
                         }
                     }
+
+                    std::copy(std::begin(binary_data), std::end(binary_data), std::ostreambuf_iterator<char>(out));
                 }
             }
 
@@ -194,12 +190,15 @@ namespace argon
                     throw std::runtime_error(std::string("Could not open " + filename));
 
                 out << header;
+
+                auto width  = image.get_width();
+                auto height = image.get_height();
                 
                 if (!binary)
                 {
-                    for (int y = 0; y < image.get_height(); ++y)
+                    for (int y = 0; y < height; ++y)
                     {
-                        for (int x = 0; x < image.get_width(); ++x)
+                        for (int x = 0; x < width; ++x)
                         {
                             out << clamp16(image(x,y), header.max) << ' ';
                         }
@@ -208,34 +207,35 @@ namespace argon
                 }
                 else
                 {
-                    if (header.bytes == 2)
+                    std::vector<std::uint8_t> binary_data(width * height * header.bytes);
+                    auto byte_order = endianess();
+                    
+                    int ptr = 0;                    
+                    for (int y = 0; y < height; ++y)
                     {
-                        auto byte_order = endianess();
-                        
-                        for (int y = 0; y < image.get_height(); ++y)
+                        for (int x = 0; x < width; ++x)
                         {
-                            for (int x = 0; x < image.get_width(); ++x)
+                            if (header.bytes == 2)
                             {
                                 std::uint16_t clamped = clamp16(image(x,y), header.max);
                                 if (byte_order == endian::LITTLE)
                                     clamped = swap(clamped);
 
-                                char *bytes = reinterpret_cast<char *>(&clamped);
-                                out << bytes[0] << bytes[1];
+                                std::uint8_t *bytes = reinterpret_cast<std::uint8_t *>(&clamped);
+                                binary_data[ptr * header.bytes + 0] = bytes[0];
+                                binary_data[ptr * header.bytes + 1] = bytes[1];
                             }
-                        }
-                    }
-                    else
-                    {
-                        for (int y = 0; y < image.get_height(); ++y)
-                        {
-                            for (int x = 0; x < image.get_width(); ++x)
+                            else
                             {
                                 std::uint8_t clamped = clamp8(image(x,y), header.max);
-                                out << clamped;
+                                binary_data[ptr] = clamped;
                             }
+
+                            ++ptr;
                         }
                     }
+
+                    std::copy(std::begin(binary_data), std::end(binary_data), std::ostreambuf_iterator<char>(out));
                 }
             }
 
@@ -259,11 +259,15 @@ namespace argon
 
                 out << header;
                 
+                auto width    = image.get_width();
+                auto height   = image.get_height();
+                auto channels = image.get_num_channels();
+                
                 if (!binary)
                 {
-                    for (int y = 0; y < image.get_height(); ++y)
+                    for (int y = 0; y < height; ++y)
                     {
-                        for (int x = 0; x < image.get_width(); ++x)
+                        for (int x = 0; x < width; ++x)
                         {
                             for (int c = 0; c < 3; ++c)
                             {
@@ -275,40 +279,38 @@ namespace argon
                 }
                 else
                 {
-                    if (header.bytes == 2)
-                    {
-                        auto byte_order = endianess();
+                    std::vector<std::uint8_t> binary_data(width * height * channels * header.bytes);
+                    auto byte_order = endianess();
 
-                        for (int y = 0; y < image.get_height(); ++y)
+                    int ptr = 0;
+                    for (int y = 0; y < height; ++y)
+                    {
+                        for (int x = 0; x < width; ++x)
                         {
-                            for (int x = 0; x < image.get_width(); ++x)
+                            for (int c = 0; c < channels; ++c)
                             {
-                                for (int c = 0; c < image.get_num_channels(); ++c)
+                                if (header.bytes == 2)
                                 {
                                     std::uint16_t clamped = clamp16(image(x,y,c), header.max);
                                     if (byte_order == endian::LITTLE)
                                         clamped = swap(clamped);
-
-                                    char *bytes = reinterpret_cast<char *>(&clamped);
-                                    out << bytes[0] << bytes[1];
+                                    
+                                    std::uint8_t* bytes = reinterpret_cast<std::uint8_t *>(&clamped);
+                                    binary_data[ptr * header.bytes + 0] = bytes[0];
+                                    binary_data[ptr * header.bytes + 1] = bytes[1];
                                 }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (int y = 0; y < image.get_height(); ++y)
-                        {
-                            for (int x = 0; x < image.get_width(); ++x)
-                            {
-                                for (int c = 0; c < image.get_num_channels(); ++c)
+                                else
                                 {
                                     std::uint8_t clamped = clamp8(image(x,y,c), header.max);
-                                    out << clamped;
+                                    binary_data[ptr] = clamped;
                                 }
+
+                                ++ptr;
                             }
                         }
                     }
+
+                    std::copy(std::begin(binary_data), std::end(binary_data), std::ostreambuf_iterator<char>(out));
                 }
             }
 
@@ -327,23 +329,36 @@ namespace argon
 
                 out << header;
 
+                auto width    = image.get_width();
+                auto height   = image.get_height();
+                auto channels = image.get_num_channels();
+                
+                std::vector<std::uint8_t> binary_data(width * height * channels * sizeof(float));
                 auto byte_order = endianess();
 
-                for (int y = 0; y < image.get_height(); ++y)
+                int ptr = 0;
+                for (int y = 0; y < height; ++y)
                 {
-                    for (int x = 0; x < image.get_width(); ++x)
+                    for (int x = 0; x < width; ++x)
                     {
-                        for (int c = 0; c < image.get_num_channels(); ++c)
+                        for (int c = 0; c < channels; ++c)
                         {
                             float pixel = image(x,y,c);
                             if (byte_order == endian::BIG)
                                 pixel = swap(pixel);
 
-                            char * bytes = reinterpret_cast<char*>(&pixel);
-                            out << bytes[0] << bytes[1] << bytes[2] << bytes[3];
+                            std::uint8_t *bytes = reinterpret_cast<std::uint8_t *>(&pixel);
+                            binary_data[ptr * sizeof(float) + 0] = bytes[0];
+                            binary_data[ptr * sizeof(float) + 1] = bytes[1];
+                            binary_data[ptr * sizeof(float) + 2] = bytes[2];
+                            binary_data[ptr * sizeof(float) + 3] = bytes[3];
+
+                            ++ptr;
                         }
                     }
                 }
+
+                std::copy(std::begin(binary_data), std::end(binary_data), std::ostreambuf_iterator<char>(out));
             }
             
         private:
@@ -363,6 +378,7 @@ namespace argon
                 header.magic  = static_cast<char>(type);
                 header.width  = image.get_width();
                 header.height = image.get_height();
+                header.max    = 1;
 
                 return header;
             }
