@@ -42,6 +42,11 @@ namespace argon
         public:
             int max;
 
+            pbm_header()
+            {
+                max = 1;
+            }
+
             friend std::ostream& operator<<( std::ostream &out, const pbm_header &header );       
             friend std::istream& operator>>( std::istream &in, pbm_header &header);
 
