@@ -6,6 +6,7 @@
 #include "ar/endian.h"
 
 #include <string>
+#include <vector>
 #include <iostream>
 #include <fstream>
 #include <iterator>
@@ -47,18 +48,12 @@ namespace argon
             template <typename T>
             static image<T> read_pbm( const std::string &filename )
             {
-                auto header = read_pbm_header(filename);
-
-                auto type = static_cast<pnm_type>(header.magic);
-                auto mode = std::ios::in;
-                if (type == pnm_type::PBM_BINARY)
-                {
-                    mode |= std::ios::binary;
-                }
-                
-                std::ifstream in(filename, mode);
+                std::ifstream in(filename, std::ios::in | std::ios::binary);
                 if (!in.is_open())
                     throw std::runtime_error(std::string("Could not open " + filename));
+                
+                auto header = read_pbm_header(in);
+                auto type = static_cast<pnm_type>(header.magic);
                 
                 image<T> img(header.width, header.height);
                 if (type == pnm_type::PBM_ASCII)
@@ -69,17 +64,44 @@ namespace argon
                         for (int x = 0; x < img.get_width(); ++x)
                         {
                             if (!in.good())
-                                throw std::runtime_error(std::string("Error reading image " + filename));
+                                throw std::runtime_error(std::string("Error reading " + filename));
                             
-                            in >> val;       
+                            in >> val;
                             img(x,y) = clamp8(val, header.max);
                         }
                     }
 
                 }
                 else
-                {
+                { 
+                    auto width = img.get_width();
+                    int num_bits = 8;
+                    int bytes_per_row = (width & 0x7) == 0 ? width / num_bits : width / num_bits + 1;
+                    std::vector<std::uint8_t> binary_data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 
+                    if (binary_data.size() < static_cast<std::size_t>(header.height * bytes_per_row))
+                        throw std::runtime_error(std::string("Error reading " + filename + ", not enough data"));
+                    
+                    int ptr = 0;
+                    for (int y = 0; y < img.get_height(); ++y)
+                    {
+                        int x = 0;
+                        for (int b = 0; b < bytes_per_row; ++b)
+                        {
+                            if (!in.good())
+                                throw std::runtime_error(std::string("Error reading " + filename));
+
+                            int mask = 0x80;
+                            std::uint8_t packed = binary_data[ptr];
+                            for (int i = 0; i < num_bits && x < img.get_width(); ++i, ++x)
+                            {
+                                img(x,y) = clamp8(packed & mask, header.max);
+                                mask = mask >> 1;
+                            }
+
+                            ++ptr;
+                        }
+                    }
                 }
 
                 return img; 
@@ -88,18 +110,12 @@ namespace argon
             template <typename T>
             static image<T> read_pgm( const std::string &filename )
             {
-                auto header = read_pgm_header(filename);
-
-                auto type = static_cast<pnm_type>(header.magic);
-                auto mode = std::ios::in;
-                if (type == pnm_type::PGM_BINARY)
-                {
-                    mode |= std::ios::binary;
-                }
-                
-                std::ifstream in(filename, mode);
+                std::ifstream in(filename, std::ios::in | std::ios::binary);
                 if (!in.is_open())
                     throw std::runtime_error(std::string("Could not open " + filename));
+                
+                auto header = read_pgm_header(in);
+                auto type = static_cast<pnm_type>(header.magic);
                 
                 image<T> img(header.width, header.height);
                 if (type == pnm_type::PGM_ASCII)
@@ -110,8 +126,8 @@ namespace argon
                         for (int x = 0; x < img.get_width(); ++x)
                         {
                             if (!in.good())
-                                throw std::runtime_error(std::string("Error reading image " + filename));
-                            
+                                throw std::runtime_error(std::string("Error reading " + filename));
+
                             in >> val;
                             if (header.bytes == 1)
                                 img(x,y) = clamp8(val, header.max);
@@ -122,27 +138,56 @@ namespace argon
                 }
                 else
                 {
-                    
+                    std::vector<std::uint8_t> binary_data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+                    if (binary_data.size() < static_cast<std::size_t>(header.width * header.height * header.bytes))
+                        throw std::runtime_error(std::string("Error reading " + filename + ", not enough data"));
+
+                    auto byte_order = endianess();
+                    int ptr = 0;
+                    for (int y = 0;y < img.get_height(); ++y)
+                    {
+                        for (int x = 0; x < img.get_width(); ++x)
+                        {
+                            if (!in.good())
+                                throw std::runtime_error(std::string("Error reading " + filename));
+
+                            if (header.bytes == 2)
+                            {
+                                std::uint8_t bytes[2];
+                                bytes[0] = binary_data[ptr * 2 + 0];
+                                bytes[1] = binary_data[ptr * 2 + 1];
+
+                                std::uint16_t *val = reinterpret_cast<std::uint16_t *>(&bytes[0]);
+                                if (byte_order == endian::LITTLE)
+                                {
+                                    *val = swap(*val);
+                                }
+
+                                img(x,y) = clamp16(*val, header.max);
+                            }
+                            else
+                            {
+                                img(x,y) = clamp8(binary_data[ptr], header.max);
+                            }
+
+                            ++ptr;
+                        }
+                    }
                 }
 
                 return img; 
             }
 
+
             template <typename T>
             static image<T> read_ppm( const std::string &filename )
             {
-                auto header = read_ppm_header(filename);
-                
-                auto type = static_cast<pnm_type>(header.magic);
-                auto mode = std::ios::in;
-                if (type == pnm_type::PPM_BINARY)
-                {
-                    mode |= std::ios::binary;
-                }
-                
-                std::ifstream in(filename, mode);
+                std::ifstream in(filename, std::ios::in | std::ios::binary);
                 if (!in.is_open())
                     throw std::runtime_error(std::string("Could not open " + filename));
+                
+                auto header = read_ppm_header(in);
+                auto type = static_cast<pnm_type>(header.magic);
                 
                 image<T> img(header.width, header.height, 3);
                 if (type == pnm_type::PPM_ASCII)
@@ -155,20 +200,57 @@ namespace argon
                             for (int c = 0; c < img.get_num_channels(); ++c)
                             {
                                 if (!in.good())
-                                    throw std::runtime_error(std::string("Error reading image " + filename));
+                                    throw std::runtime_error(std::string("Error reading " + filename));
 
                                 in >> val;
-                                if (header.bytes == 1)
-                                    img(x,y,c) = clamp8(val, header.max);
-                                else
+                                if (header.bytes == 2)
                                     img(x,y,c) = clamp16(val, header.max);
+                                else
+                                    img(x,y,c) = clamp8(val, header.max);
                             }
                         }
                     }
                 }
                 else
                 {
+                    std::vector<std::uint8_t> binary_data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+                    if (binary_data.size() < static_cast<std::size_t>(header.width * header.height * 3 * header.bytes))
+                        throw std::runtime_error(std::string("Error reading " + filename + ", not enough data"));
 
+                    auto byte_order = endianess();
+                    int ptr = 0;
+                    for (int y = 0; y < img.get_height(); ++y)
+                    {
+                        for (int x = 0; x < img.get_width(); ++x)
+                        {
+                            for (int c = 0; c < img.get_num_channels(); ++c)
+                            {
+                                if (!in.good())
+                                    throw std::runtime_error(std::string("Error reading " + filename));
+
+                                if (header.bytes == 2)
+                                {
+                                    std::uint8_t bytes[2];
+                                    bytes[0] = binary_data[ptr * 2 + 0];
+                                    bytes[1] = binary_data[ptr * 2 + 1];
+
+                                    std::uint16_t *val = reinterpret_cast<std::uint16_t *>(&bytes[0]);
+                                    if (byte_order == endian::LITTLE)
+                                    {
+                                        *val = swap(*val);
+                                    }
+
+                                    img(x,y,c) = clamp16(*val, header.max);
+                                }
+                                else
+                                {
+                                    img(x,y,c) = clamp8(binary_data[ptr], header.max);
+                                }
+
+                                ++ptr;
+                            }
+                        }
+                    }
                 }
 
                 return img; 
@@ -177,9 +259,50 @@ namespace argon
             template <typename T>
             static image<T> read_pfm( const std::string &filename )
             {
-                auto header = read_pfm_header(filename);
-                int channels = 1;
+                std::ifstream in(filename, std::ios::in | std::ios::binary);
+                if (!in.is_open())
+                    throw std::runtime_error(std::string("Could not open " + filename));
+                
+                auto header = read_pfm_header(in);
+                auto type = static_cast<pnm_type>(header.magic);
+                auto img_byte_order = header.endianess == 1 ? endian::BIG : endian::LITTLE;
+                int channels = type == pnm_type::PFM_SINGLE ? 1 : 3;
+
                 image<T> img(header.width, header.height, channels);
+
+                std::vector<std::uint8_t> binary_data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+                if (binary_data.size() < static_cast<std::size_t>(header.width * header.height * channels * sizeof(float)))
+                    throw std::runtime_error(std::string("Error reading " + filename + ", not enough data"));
+
+                auto byte_order = endianess();
+                int ptr = 0;
+                for (int y = 0; y < img.get_height(); ++y)
+                {
+                    for (int x = 0; x < img.get_width(); ++x)
+                    {
+                        for (int c = 0; c < img.get_num_channels(); ++c)
+                        {
+                            if (!in.good())
+                                throw std::runtime_error(std::string("Error reading " + filename));
+
+                            std::uint8_t bytes[sizeof(float)];
+                            bytes[0] = binary_data[ptr * sizeof(float) + 0];
+                            bytes[1] = binary_data[ptr * sizeof(float) + 1];
+                            bytes[2] = binary_data[ptr * sizeof(float) + 2];
+                            bytes[3] = binary_data[ptr * sizeof(float) + 3];
+
+                            float *val = reinterpret_cast<float *>(&bytes[0]);
+                            if (byte_order != img_byte_order)
+                            {
+                                *val = swap(*val);
+                            }
+
+                            img(x,y,c) = *val;
+
+                            ++ptr;
+                        }
+                    }
+                }
 
                 return img; 
             }
@@ -467,10 +590,10 @@ namespace argon
         private:
             static pnm_type peek_header( const std::string &filename );
 
-            static pbm_header read_pbm_header( const std::string &filename );
-            static pgm_header read_pgm_header( const std::string &filename );
-            static ppm_header read_ppm_header( const std::string &filename ); 
-            static pfm_header read_pfm_header( const std::string &filename );
+            static pbm_header read_pbm_header( std::ifstream &in );
+            static pgm_header read_pgm_header( std::ifstream &in );
+            static ppm_header read_ppm_header( std::ifstream &in ); 
+            static pfm_header read_pfm_header( std::ifstream &in );
 
             template <typename T>
             static pbm_header get_pbm_header( const image<T> &image, bool binary = false )
