@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <iostream>
 #include <algorithm>
 #include <stdexcept>
 #include <cmath>
@@ -70,8 +71,31 @@ namespace argon
                 return *std::max_element(std::begin(_data), std::end(_data));
             }
 
-        public:
-            
+            friend std::ostream& operator<<( std::ostream& out, const image<T> &img)
+            {
+                for (int y = 0; y < img.get_height(); ++y)
+                {
+                    for (int x = 0; x < img.get_width(); ++x)
+                    {
+                        out << '(';
+                        bool first = true;
+                        for (int c = 0; c < img.get_num_channels(); ++c)
+                        {
+                            if (!first)
+                                out << ", ";
+                            else
+                                first = false;
+
+                            out << img(x,y,c);
+                        }
+                        out << ") ";
+                    }
+                    out << "\n";
+                }
+                
+                return out;
+            }
+
         protected:
             int _width;
             int _height;
