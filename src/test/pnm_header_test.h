@@ -164,7 +164,6 @@ TEST (pnm_header_test, pfm_test)
     std::string testee3 = "P1 -1 0 2.\n";
     std::string testee4 = "PF -1 0 2.\n";
     std::string testee5 = "PF 16 0 2.\n";
-    std::string testee6 = "PF 16 32 2.\n";
 
     std::stringstream sstream;
     argon::pfm_header header;
@@ -190,9 +189,6 @@ TEST (pnm_header_test, pfm_test)
     EXPECT_THROW(sstream >> header, std::runtime_error);
     
     sstream.str(testee5);
-    EXPECT_THROW(sstream >> header, std::runtime_error);
-    
-    sstream.str(testee6);
     EXPECT_THROW(sstream >> header, std::runtime_error);
 }
 

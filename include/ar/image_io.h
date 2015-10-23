@@ -297,7 +297,7 @@ namespace argon
                                 *val = swap(*val);
                             }
 
-                            img(x,y,c) = *val;
+                            img(x,y,c) = (*val) / header.scale;
 
                             ++ptr;
                         }

@@ -229,7 +229,11 @@ namespace argon
 
     void pnm_header_parser::consume_endianess( std::istream &in, pfm_header &header )
 	{
-        in >> header.endianess;
+        float val;
+        in >> val;
+        header.endianess = val < 0.f ? -1.f : 1.f;
+        header.scale = std::abs(val);
+
         current_state = state::HAS_ENDIANESS;
 	}
 }
