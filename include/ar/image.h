@@ -15,8 +15,24 @@ namespace argon
     {
         public:
             image( int width, int height, int channels = 1 )
-                : _width{width}, _height{height}, _channels{channels},
-                  _data(_width * _height * _channels, T(0))
+                : _width{width}
+                , _height{height}
+                , _channels{channels}
+                , _data(_width * _height * _channels, T(0))
+            {}
+
+            image( int width, int height, int channels, const std::vector<T> &data )
+                : _width{width}
+                , _height{height}
+                , _channels{channels}
+                , _data(data)
+            {}
+
+            image( int width, int height, int channels, std::vector<T> &&data )
+                : _width{width}
+                , _height{height}
+                , _channels{channels}
+                , _data(data)
             {}
        
             const T& operator()( int x, int y, int c = 0 ) const
@@ -94,6 +110,11 @@ namespace argon
                 }
                 
                 return out;
+            }
+
+            const std::vector<T> & data() const
+            {
+                return _data;
             }
 
         protected:

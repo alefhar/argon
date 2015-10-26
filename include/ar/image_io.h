@@ -541,6 +541,46 @@ namespace argon
             }
 
             template <typename T>
+            static void write_as_pfm( const std::string &filename, const pfm_header &header, const std::vector<T> &data )
+            {
+                auto type = static_cast<pnm_type>(header.magic);
+                if (type != pnm_type::PFM_SINGLE && type != pnm_type::PFM_TRIPLE)
+                    throw std::invalid_argument("PFM header has incorrect magic byte");
+
+                auto width    = header.width;
+                auto height   = header.height;
+                auto channels = type == pnm_type::PFM_SINGLE ? 1 : 3;
+
+                if (data.size() < static_cast<std::size_t>(width * height * channels))
+                    throw std::invalid_argument("'data' does not contain enough elements");
+
+                std::vector<std::uint8_t> binary_data(width * height * channels * sizeof(float));
+                auto byte_order = endianess();
+                
+                for (auto p = 0u; p < data.size(); ++p)
+                {
+                    float pixel = data[p];
+                    if (byte_order == endian::BIG)
+                        pixel = swap(pixel);
+
+                    std::uint8_t *bytes = reinterpret_cast<std::uint8_t *>(&pixel);
+                    binary_data[p * sizeof(float) + 0] = bytes[0];
+                    binary_data[p * sizeof(float) + 1] = bytes[1];
+                    binary_data[p * sizeof(float) + 2] = bytes[2];
+                    binary_data[p * sizeof(float) + 3] = bytes[3];
+
+                }
+                
+                auto mode = std::ios::out | std::ios::binary;
+                std::ofstream out(filename, mode);
+                if (!out.is_open())
+                    throw std::runtime_error(std::string("Could not open " + filename));
+
+                out << header;
+                std::copy(std::begin(binary_data), std::end(binary_data), std::ostreambuf_iterator<char>(out));
+            }
+
+            template <typename T>
             static void write_pfm( const std::string &filename, const image<T> &image )
             {
                 if (image.get_num_channels() != 3 && image.get_num_channels() != 1)

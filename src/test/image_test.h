@@ -4,6 +4,7 @@
 #include "ar/image.h"
 #include "ar/image_io.h"
 
+#include <vector>
 #include <gtest/gtest.h>
 
 using image_d = argon::image<double>;
@@ -193,6 +194,89 @@ TEST (image_test, ppm_test)
     EXPECT_EQ(65535, image_in_wide_binary(10,10,2));
     EXPECT_EQ(65535, image_in_wide_binary( 9,10,2));
     EXPECT_EQ(65535, image_in_wide_binary(10, 9,2));
+}
+
+TEST (image_test, write_as_pfm_test)
+{
+    std::vector<float> image_single(5 * 5);
+    std::vector<float> image_triple(5 * 5 * 3);
+
+    argon::pfm_header header_single, header_triple;
+    header_single.magic = static_cast<char>(argon::pnm_type::PFM_SINGLE);
+    header_single.width     =  5;
+    header_single.height    =  5;
+    header_single.endianess = -1.;
+    header_single.scale     =  1.;
+    
+    header_triple.magic = static_cast<char>(argon::pnm_type::PFM_TRIPLE);
+    header_triple.width     =  5;
+    header_triple.height    =  5;
+    header_triple.endianess = -1.;
+    header_triple.scale     =  1.;
+
+    for (auto i = 0u; i < image_single.size(); ++i)
+    {
+        if (i % 2 == 0)
+            image_single[i] = 1.f;
+        else
+            image_single[i] = 0.f;
+    }
+
+    for (auto i = 0u; i < image_triple.size(); i += 3)
+    {
+        if (i % 2 == 0)
+        {
+            image_triple[i+0] = 1.f;
+            image_triple[i+1] = .5f;
+            image_triple[i+2] = .0f;
+        }
+        else
+        {
+            image_triple[i+0] = .0f;
+            image_triple[i+1] = .0f;
+            image_triple[i+2] = .0f;
+        }
+    }
+
+    argon::image_io::write_as_pfm("image_single_vector.pfm", header_single, image_single);
+    argon::image_io::write_as_pfm("image_triple_vector.pfm", header_triple, image_triple);
+
+    auto image_in_single = argon::image_io::read_pfm<float>("image_single_vector.pfm");
+    auto image_in_triple = argon::image_io::read_pfm<float>("image_triple_vector.pfm");
+
+    ASSERT_EQ(5, image_in_single.get_width());
+    ASSERT_EQ(5, image_in_single.get_height());
+    for (auto y = 0; y < image_in_single.get_height(); ++y)
+    {
+        for (auto x = 0; x < image_in_single.get_width(); ++x)
+        {
+            if ((x + y) % 2 == 0)
+                EXPECT_EQ(1.f, image_in_single(x,y));
+            else
+                EXPECT_EQ(0.f, image_in_single(x,y));
+        }
+    }
+
+    ASSERT_EQ(5, image_in_triple.get_width());
+    ASSERT_EQ(5, image_in_triple.get_height());
+    for (auto y = 0; y < image_in_triple.get_height(); ++y)
+    {
+        for (auto x = 0; x < image_in_triple.get_width(); ++x)
+        {
+            if ((x + y) % 2 == 0)
+            {
+                EXPECT_EQ(1.f, image_in_triple(x,y,0));
+                EXPECT_EQ(.5f, image_in_triple(x,y,1));
+                EXPECT_EQ(.0f, image_in_triple(x,y,2));
+            }
+            else
+            {
+                EXPECT_EQ(.0f, image_in_triple(x,y,0));
+                EXPECT_EQ(.0f, image_in_triple(x,y,1));
+                EXPECT_EQ(.0f, image_in_triple(x,y,2));
+            }
+        }
+    }
 }
 
 TEST (image_test, pfm_test)
