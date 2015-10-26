@@ -25,11 +25,16 @@ TEST (image_test, interpolate_linear_test)
 TEST (image_test, pbm_test)
 {
     argon::image<int> image(20, 20);
- 
     image( 9, 9) = 1;
     image(10,10) = 5;
     image( 9,10) = 5;
     image(10, 9) = 1;
+
+    argon::image<int> image_clamped(20, 20);
+    image_clamped( 9, 9) = 1;
+    image_clamped(10,10) = 1;
+    image_clamped( 9,10) = 1;
+    image_clamped(10, 9) = 1;
  
     argon::image_io::write("image.pbm", image, argon::pnm_type::PBM_ASCII);
     argon::image_io::write("image_binary.pbm", image, argon::pnm_type::PBM_BINARY);
@@ -37,19 +42,8 @@ TEST (image_test, pbm_test)
     auto image_in        = argon::image_io::read<int>("image.pbm");
     auto image_in_binary = argon::image_io::read<int>("image_binary.pbm");
 
-    ASSERT_EQ(20, image_in.get_width());
-    ASSERT_EQ(20, image_in.get_height());
-    EXPECT_EQ( 1, image_in( 9, 9));
-    EXPECT_EQ( 1, image_in(10,10));
-    EXPECT_EQ( 1, image_in( 9,10));
-    EXPECT_EQ( 1, image_in(10, 9));
-
-    ASSERT_EQ(20, image_in_binary.get_width());
-    ASSERT_EQ(20, image_in_binary.get_height());
-    EXPECT_EQ( 1, image_in_binary( 9, 9));
-    EXPECT_EQ( 1, image_in_binary(10,10));
-    EXPECT_EQ( 1, image_in_binary( 9,10));
-    EXPECT_EQ( 1, image_in_binary(10, 9));
+    EXPECT_EQ(image_clamped, image_in);
+    EXPECT_EQ(image_clamped, image_in_binary);
 }
 
 TEST (image_test, pgm_test)
@@ -77,33 +71,11 @@ TEST (image_test, pgm_test)
     auto image_in_wide        = argon::image_io::read<int>("image_wide.pgm");
     auto image_in_wide_binary = argon::image_io::read<int>("image_wide_binary.pgm");
 
-    ASSERT_EQ( 20, image_in.get_width());
-    ASSERT_EQ( 20, image_in.get_height());
-    EXPECT_EQ(128, image_in( 9, 9));
-    EXPECT_EQ(128, image_in(10,10));
-    EXPECT_EQ(128, image_in( 9,10));
-    EXPECT_EQ(128, image_in(10, 9));
+    EXPECT_EQ(image, image_in);
+    EXPECT_EQ(image, image_in);
 
-    ASSERT_EQ( 20, image_in_binary.get_width());
-    ASSERT_EQ( 20, image_in_binary.get_height());
-    EXPECT_EQ(128, image_in_binary( 9, 9));
-    EXPECT_EQ(128, image_in_binary(10,10));
-    EXPECT_EQ(128, image_in_binary( 9,10));
-    EXPECT_EQ(128, image_in_binary(10, 9));
-
-    ASSERT_EQ(   20, image_in_wide.get_width());
-    ASSERT_EQ(   20, image_in_wide.get_height());
-    EXPECT_EQ(32767, image_in_wide( 9, 9));
-    EXPECT_EQ(32767, image_in_wide(10,10));
-    EXPECT_EQ(32767, image_in_wide( 9,10));
-    EXPECT_EQ(32767, image_in_wide(10, 9));
-
-    ASSERT_EQ(   20, image_in_wide_binary.get_width());
-    ASSERT_EQ(   20, image_in_wide_binary.get_height());
-    EXPECT_EQ(32767, image_in_wide_binary( 9, 9));
-    EXPECT_EQ(32767, image_in_wide_binary(10,10));
-    EXPECT_EQ(32767, image_in_wide_binary( 9,10));
-    EXPECT_EQ(32767, image_in_wide_binary(10, 9));
+    EXPECT_EQ(image_wide, image_in_wide);
+    EXPECT_EQ(image_wide, image_in_wide_binary);
 }
 
 TEST (image_test, ppm_test)
@@ -131,69 +103,11 @@ TEST (image_test, ppm_test)
     auto image_in_wide        = argon::image_io::read<int>("image_wide.ppm");
     auto image_in_wide_binary = argon::image_io::read<int>("image_wide_binary.ppm");
 
-    ASSERT_EQ( 20, image_in.get_width());
-    ASSERT_EQ( 20, image_in.get_height());
-    ASSERT_EQ(  3, image_in.get_num_channels());
-    EXPECT_EQ(128, image_in( 9, 9,0));
-    EXPECT_EQ(128, image_in(10,10,0));
-    EXPECT_EQ(128, image_in( 9,10,0));
-    EXPECT_EQ(128, image_in(10, 9,0));
-    EXPECT_EQ( 64, image_in( 9, 9,1));
-    EXPECT_EQ( 64, image_in(10,10,1));
-    EXPECT_EQ( 64, image_in( 9,10,1));
-    EXPECT_EQ( 64, image_in(10, 9,1));
-    EXPECT_EQ(255, image_in( 9, 9,2));
-    EXPECT_EQ(255, image_in(10,10,2));
-    EXPECT_EQ(255, image_in( 9,10,2));
-    EXPECT_EQ(255, image_in(10, 9,2));
+    EXPECT_EQ(image, image_in);
+    EXPECT_EQ(image, image_in_binary);
 
-    ASSERT_EQ( 20, image_in_binary.get_width());
-    ASSERT_EQ( 20, image_in_binary.get_height());
-    ASSERT_EQ(  3, image_in_binary.get_num_channels());
-    EXPECT_EQ(128, image_in_binary( 9, 9,0));
-    EXPECT_EQ(128, image_in_binary(10,10,0));
-    EXPECT_EQ(128, image_in_binary( 9,10,0));
-    EXPECT_EQ(128, image_in_binary(10, 9,0));
-    EXPECT_EQ( 64, image_in_binary( 9, 9,1));
-    EXPECT_EQ( 64, image_in_binary(10,10,1));
-    EXPECT_EQ( 64, image_in_binary( 9,10,1));
-    EXPECT_EQ( 64, image_in_binary(10, 9,1));
-    EXPECT_EQ(255, image_in_binary( 9, 9,2));
-    EXPECT_EQ(255, image_in_binary(10,10,2));
-    EXPECT_EQ(255, image_in_binary( 9,10,2));
-    EXPECT_EQ(255, image_in_binary(10, 9,2));
-
-    ASSERT_EQ(   20, image_in_wide.get_width());
-    ASSERT_EQ(   20, image_in_wide.get_height());
-    ASSERT_EQ(    3, image_in_wide.get_num_channels());
-    EXPECT_EQ(32767, image_in_wide( 9, 9,0));
-    EXPECT_EQ(32767, image_in_wide(10,10,0));
-    EXPECT_EQ(32767, image_in_wide( 9,10,0));
-    EXPECT_EQ(32767, image_in_wide(10, 9,0));
-    EXPECT_EQ(16383, image_in_wide( 9, 9,1));
-    EXPECT_EQ(16383, image_in_wide(10,10,1));
-    EXPECT_EQ(16383, image_in_wide( 9,10,1));
-    EXPECT_EQ(16383, image_in_wide(10, 9,1));
-    EXPECT_EQ(65535, image_in_wide( 9, 9,2));
-    EXPECT_EQ(65535, image_in_wide(10,10,2));
-    EXPECT_EQ(65535, image_in_wide( 9,10,2));
-    EXPECT_EQ(65535, image_in_wide(10, 9,2));
-    
-    ASSERT_EQ(   20, image_in_wide_binary.get_width());
-    ASSERT_EQ(   20, image_in_wide_binary.get_height());
-    ASSERT_EQ(    3, image_in_wide_binary.get_num_channels());
-    EXPECT_EQ(32767, image_in_wide_binary( 9, 9,0));
-    EXPECT_EQ(32767, image_in_wide_binary(10,10,0));
-    EXPECT_EQ(32767, image_in_wide_binary( 9,10,0));
-    EXPECT_EQ(32767, image_in_wide_binary(10, 9,0));
-    EXPECT_EQ(16383, image_in_wide_binary( 9, 9,1));
-    EXPECT_EQ(16383, image_in_wide_binary(10,10,1));
-    EXPECT_EQ(16383, image_in_wide_binary( 9,10,1));
-    EXPECT_EQ(16383, image_in_wide_binary(10, 9,1));
-    EXPECT_EQ(65535, image_in_wide_binary( 9, 9,2));
-    EXPECT_EQ(65535, image_in_wide_binary(10,10,2));
-    EXPECT_EQ(65535, image_in_wide_binary( 9,10,2));
-    EXPECT_EQ(65535, image_in_wide_binary(10, 9,2));
+    EXPECT_EQ(image_wide, image_in_wide);
+    EXPECT_EQ(image_wide, image_in_wide_binary);
 }
 
 TEST (image_test, write_as_pfm_test)
@@ -300,29 +214,8 @@ TEST (image_test, pfm_test)
     auto image_in_single = argon::image_io::read<float>("image_single.pfm");
     auto image_in_triple = argon::image_io::read<float>("image_triple.pfm");
 
-    ASSERT_EQ(   20, image_in_single.get_width());
-    ASSERT_EQ(   20, image_in_single.get_height());
-    ASSERT_EQ(    1, image_in_single.get_num_channels());
-    EXPECT_EQ(0.25f, image_in_single( 9, 9));
-    EXPECT_EQ(0.25f, image_in_single(10,10));
-    EXPECT_EQ(0.25f, image_in_single( 9,10));
-    EXPECT_EQ(0.25f, image_in_single(10, 9));
-
-    ASSERT_EQ(   20, image_in_triple.get_width());
-    ASSERT_EQ(   20, image_in_triple.get_height());
-    ASSERT_EQ(    3, image_in_triple.get_num_channels());
-    EXPECT_EQ(0.25f, image_in_triple( 9, 9,0));
-    EXPECT_EQ(0.25f, image_in_triple(10,10,0));
-    EXPECT_EQ(0.25f, image_in_triple( 9,10,0));
-    EXPECT_EQ(0.25f, image_in_triple(10, 9,0));
-    EXPECT_EQ( 0.5f, image_in_triple( 9, 9,1));
-    EXPECT_EQ( 0.5f, image_in_triple(10,10,1));
-    EXPECT_EQ( 0.5f, image_in_triple( 9,10,1));
-    EXPECT_EQ( 0.5f, image_in_triple(10, 9,1));
-    EXPECT_EQ(  1.f, image_in_triple( 9, 9,2));
-    EXPECT_EQ(  1.f, image_in_triple(10,10,2));
-    EXPECT_EQ(  1.f, image_in_triple( 9,10,2));
-    EXPECT_EQ(  1.f, image_in_triple(10, 9,2));
+    EXPECT_EQ(image_single, image_in_single);
+    EXPECT_EQ(image_triple, image_in_triple);
 }
 
 #endif // AR_IMAGE_TEST_H_

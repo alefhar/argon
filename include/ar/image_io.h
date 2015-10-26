@@ -587,44 +587,8 @@ namespace argon
                     throw std::invalid_argument("Image must have exactly one or three channels");
 
                 auto header = get_pfm_header(image);
-                
-                auto mode = std::ios::out | std::ios::binary;
-                std::ofstream out(filename, mode);
-                if (!out.is_open())
-                    throw std::runtime_error(std::string("Could not open " + filename));
 
-                out << header;
-
-                auto width    = image.get_width();
-                auto height   = image.get_height();
-                auto channels = image.get_num_channels();
-                
-                std::vector<std::uint8_t> binary_data(width * height * channels * sizeof(float));
-                auto byte_order = endianess();
-
-                int ptr = 0;
-                for (int y = 0; y < height; ++y)
-                {
-                    for (int x = 0; x < width; ++x)
-                    {
-                        for (int c = 0; c < channels; ++c)
-                        {
-                            float pixel = image(x,y,c);
-                            if (byte_order == endian::BIG)
-                                pixel = swap(pixel);
-
-                            std::uint8_t *bytes = reinterpret_cast<std::uint8_t *>(&pixel);
-                            binary_data[ptr * sizeof(float) + 0] = bytes[0];
-                            binary_data[ptr * sizeof(float) + 1] = bytes[1];
-                            binary_data[ptr * sizeof(float) + 2] = bytes[2];
-                            binary_data[ptr * sizeof(float) + 3] = bytes[3];
-
-                            ++ptr;
-                        }
-                    }
-                }
-
-                std::copy(std::begin(binary_data), std::end(binary_data), std::ostreambuf_iterator<char>(out));
+                write_as_pfm(filename, header, image.data());
             }
             
         private:

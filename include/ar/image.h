@@ -112,6 +112,17 @@ namespace argon
                 return out;
             }
 
+            template <typename S>
+            friend bool operator==( const image<S> &lhs, const image<S> &rhs );
+
+            friend bool operator==( const image<float> &lhs, const image<float> &rhs );
+            friend bool operator==( const image<double> &lhs, const image<double> &rhs );
+            
+            template <typename S>
+            friend bool operator!=( const image<S> &lhs, const image<S> &rhs );
+
+            friend bool operator!=( const image<float> &lhs, const image<float> &rhs );
+            friend bool operator!=( const image<double> &lhs, const image<double> &rhs );
             const std::vector<T> & data() const
             {
                 return _data;
@@ -123,6 +134,27 @@ namespace argon
             int _channels;
             std::vector<T> _data;
     };
+
+    template <typename T> bool operator==( const image<T> &lhs, const image<T> &rhs )
+    {
+        if (lhs._width != rhs._width  ||
+                lhs._height != rhs._height ||
+                lhs._channels != lhs._channels)
+            return false;
+
+        for (auto p = 0u; p < lhs._data.size(); ++p)
+        {
+            if (lhs._data[p] != rhs._data[p])
+                return false;
+        }
+
+        return true;
+    }
+
+    template <typename T> bool operator!=( const image<T> &lhs, const image<T> &rhs )
+    {
+        return !(lhs == rhs);
+    }
 }
 
 #endif // AR_IMAGE_H_
