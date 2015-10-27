@@ -22,6 +22,23 @@ TEST (image_test, interpolate_linear_test)
     EXPECT_DOUBLE_EQ(2   , img.interpolate_linear(1., 1.));
 }
 
+TEST (image_test, write_as_pbm_test)
+{
+    argon::pbm_header header_ascii, header_binary;
+    header_ascii.magic  = static_cast<char>(argon::pnm_type::PBM_ASCII);
+    header_ascii.width  = 5;
+    header_ascii.height = 5;
+    
+    header_binary.magic  = static_cast<char>(argon::pnm_type::PBM_BINARY);
+    header_binary.width  = 5;
+    header_binary.height = 5;
+
+    auto too_small = std::vector<float>(10);
+
+    EXPECT_THROW(argon::image_io::write_as_pbm("foo.pfm", header_ascii , too_small), std::invalid_argument);
+    EXPECT_THROW(argon::image_io::write_as_pbm("foo.pfm", header_binary, too_small), std::invalid_argument);
+}
+
 TEST (image_test, pbm_test)
 {
     argon::image<int> image(20, 20);
@@ -44,6 +61,25 @@ TEST (image_test, pbm_test)
 
     EXPECT_EQ(image_clamped, image_in);
     EXPECT_EQ(image_clamped, image_in_binary);
+}
+
+TEST (image_test, write_as_pgm_test)
+{
+    argon::pgm_header header_ascii, header_binary;
+    header_ascii.magic  = static_cast<char>(argon::pnm_type::PGM_ASCII);
+    header_ascii.width  = 5;
+    header_ascii.height = 5;
+    header_ascii.bytes  = 1;
+    
+    header_binary.magic  = static_cast<char>(argon::pnm_type::PGM_BINARY);
+    header_binary.width  = 5;
+    header_binary.height = 5;
+    header_binary.bytes  = 2;
+
+    auto too_small = std::vector<float>(10);
+
+    EXPECT_THROW(argon::image_io::write_as_pgm("foo.pfm", header_ascii , too_small), std::invalid_argument);
+    EXPECT_THROW(argon::image_io::write_as_pgm("foo.pfm", header_binary, too_small), std::invalid_argument);
 }
 
 TEST (image_test, pgm_test)
@@ -76,6 +112,25 @@ TEST (image_test, pgm_test)
 
     EXPECT_EQ(image_wide, image_in_wide);
     EXPECT_EQ(image_wide, image_in_wide_binary);
+}
+
+TEST (image_test, write_as_ppm_test)
+{
+    argon::ppm_header header_ascii, header_binary;
+    header_ascii.magic  = static_cast<char>(argon::pnm_type::PPM_ASCII);
+    header_ascii.width  = 5;
+    header_ascii.height = 5;
+    header_ascii.bytes  = 1;
+    
+    header_binary.magic  = static_cast<char>(argon::pnm_type::PPM_BINARY);
+    header_binary.width  = 5;
+    header_binary.height = 5;
+    header_binary.bytes  = 2;
+
+    auto too_small = std::vector<float>(10);
+
+    EXPECT_THROW(argon::image_io::write_as_ppm("foo.pfm", header_ascii , too_small), std::invalid_argument);
+    EXPECT_THROW(argon::image_io::write_as_ppm("foo.pfm", header_binary, too_small), std::invalid_argument);
 }
 
 TEST (image_test, ppm_test)
@@ -112,9 +167,6 @@ TEST (image_test, ppm_test)
 
 TEST (image_test, write_as_pfm_test)
 {
-    std::vector<float> image_single(5 * 5);
-    std::vector<float> image_triple(5 * 5 * 3);
-
     argon::pfm_header header_single, header_triple;
     header_single.magic = static_cast<char>(argon::pnm_type::PFM_SINGLE);
     header_single.width     =  5;
@@ -128,69 +180,10 @@ TEST (image_test, write_as_pfm_test)
     header_triple.endianess = -1.;
     header_triple.scale     =  1.;
 
-    for (auto i = 0u; i < image_single.size(); ++i)
-    {
-        if (i % 2 == 0)
-            image_single[i] = 1.f;
-        else
-            image_single[i] = 0.f;
-    }
+    auto too_small = std::vector<float>(10);
 
-    for (auto i = 0u; i < image_triple.size(); i += 3)
-    {
-        if (i % 2 == 0)
-        {
-            image_triple[i+0] = 1.f;
-            image_triple[i+1] = .5f;
-            image_triple[i+2] = .0f;
-        }
-        else
-        {
-            image_triple[i+0] = .0f;
-            image_triple[i+1] = .0f;
-            image_triple[i+2] = .0f;
-        }
-    }
-
-    argon::image_io::write_as_pfm("image_single_vector.pfm", header_single, image_single);
-    argon::image_io::write_as_pfm("image_triple_vector.pfm", header_triple, image_triple);
-
-    auto image_in_single = argon::image_io::read_pfm<float>("image_single_vector.pfm");
-    auto image_in_triple = argon::image_io::read_pfm<float>("image_triple_vector.pfm");
-
-    ASSERT_EQ(5, image_in_single.get_width());
-    ASSERT_EQ(5, image_in_single.get_height());
-    for (auto y = 0; y < image_in_single.get_height(); ++y)
-    {
-        for (auto x = 0; x < image_in_single.get_width(); ++x)
-        {
-            if ((x + y) % 2 == 0)
-                EXPECT_EQ(1.f, image_in_single(x,y));
-            else
-                EXPECT_EQ(0.f, image_in_single(x,y));
-        }
-    }
-
-    ASSERT_EQ(5, image_in_triple.get_width());
-    ASSERT_EQ(5, image_in_triple.get_height());
-    for (auto y = 0; y < image_in_triple.get_height(); ++y)
-    {
-        for (auto x = 0; x < image_in_triple.get_width(); ++x)
-        {
-            if ((x + y) % 2 == 0)
-            {
-                EXPECT_EQ(1.f, image_in_triple(x,y,0));
-                EXPECT_EQ(.5f, image_in_triple(x,y,1));
-                EXPECT_EQ(.0f, image_in_triple(x,y,2));
-            }
-            else
-            {
-                EXPECT_EQ(.0f, image_in_triple(x,y,0));
-                EXPECT_EQ(.0f, image_in_triple(x,y,1));
-                EXPECT_EQ(.0f, image_in_triple(x,y,2));
-            }
-        }
-    }
+    EXPECT_THROW(argon::image_io::write_as_pfm("foo.pfm", header_single, too_small), std::invalid_argument);
+    EXPECT_THROW(argon::image_io::write_as_pfm("foo.pfm", header_triple, too_small), std::invalid_argument);
 }
 
 TEST (image_test, pfm_test)
