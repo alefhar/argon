@@ -19,9 +19,10 @@ namespace argon
     struct header_data
     {
         public:
-            char magic;
-            int  width;
-            int  height;
+            char     magic;
+            pnm_type type;
+            int      width;
+            int      height;
 
         protected:
             virtual void check();

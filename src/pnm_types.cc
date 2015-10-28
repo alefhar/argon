@@ -75,6 +75,8 @@ namespace argon
         parser.parse_pbm_header(in, header);
         
         header.check();
+        
+        header.type  = static_cast<pnm_type>(header.magic); 
 
         return in;
     }
@@ -95,6 +97,7 @@ namespace argon
 
         header.check();
 
+        header.type  = static_cast<pnm_type>(header.magic); 
         header.bytes = header.max <= 255 ? 1 : 2;
 
         return in;
@@ -115,7 +118,8 @@ namespace argon
         parser.parse_ppm_header(in, header);
 
         header.check();
-
+        
+        header.type  = static_cast<pnm_type>(header.magic); 
         header.bytes = header.max <= 255 ? 1 : 2;
 
         return in;
@@ -138,6 +142,8 @@ namespace argon
 
         header.check();
 
+        header.type  = static_cast<pnm_type>(header.magic); 
+        
         return in;
     }
 }
