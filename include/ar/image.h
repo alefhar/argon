@@ -89,7 +89,7 @@ namespace argon
 
             friend std::ostream& operator<<( std::ostream& out, const image<T> &img)
             {
-                for (int y = 0; y < img.get_height(); ++y)
+                for (int y = img.get_height() - 1; y >= 0; --y)
                 {
                     for (int x = 0; x < img.get_width(); ++x)
                     {
