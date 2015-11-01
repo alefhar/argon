@@ -144,15 +144,15 @@ TEST (image_test, ppm_test)
     argon::image<int> image(20, 20, 3);
     argon::image<int> image_wide(20, 20, 3);
  
-    image( 9, 9,0) = 128; image( 9, 9,1) = 64; image( 9, 9,2) = 255;
+    image( 9, 9,0) =  64; image( 9, 9,1) = 32; image( 9, 9,2) = 128;
     image(10,10,0) = 128; image(10,10,1) = 64; image(10,10,2) = 255;
-    image( 9,10,0) = 128; image( 9,10,1) = 64; image( 9,10,2) = 255;
-    image(10, 9,0) = 128; image(10, 9,1) = 64; image(10, 9,2) = 255;
+    image( 9,10,0) =  16; image( 9,10,1) =  8; image( 9,10,2) =  32;
+    image(10, 9,0) =  32; image(10, 9,1) = 16; image(10, 9,2) =  64;
     
-    image_wide( 9, 9,0) = 32767; image_wide( 9, 9,1) = 16383; image_wide( 9, 9,2) = 65535;
+    image_wide( 9, 9,0) = 16384; image_wide( 9, 9,1) =  8192; image_wide( 9, 9,2) = 32767;
     image_wide(10,10,0) = 32767; image_wide(10,10,1) = 16383; image_wide(10,10,2) = 65535;
-    image_wide( 9,10,0) = 32767; image_wide( 9,10,1) = 16383; image_wide( 9,10,2) = 65535;
-    image_wide(10, 9,0) = 32767; image_wide(10, 9,1) = 16383; image_wide(10, 9,2) = 65535;
+    image_wide( 9,10,0) =  8192; image_wide( 9,10,1) =  4096; image_wide( 9,10,2) = 16384;
+    image_wide(10, 9,0) =  4096; image_wide(10, 9,1) =  2048; image_wide(10, 9,2) =  8192;
  
     argon::image_io::write("image.ppm", image, argon::pnm_type::PPM_ASCII);
     argon::image_io::write("image_binary.ppm", image, argon::pnm_type::PPM_BINARY);

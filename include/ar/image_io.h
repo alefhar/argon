@@ -196,22 +196,22 @@ namespace argon
 
                 if (header.type == pnm_type::PPM_ASCII)
                 {
-                    auto p = 0u;
+                    int p = data.size() - 3 * header.width;
                     T val;
-                    for (auto y = header.height - 1; y >= 0; --y)
+                    for (auto y = header.height - 1; y >= 0; --y, p -= 3 * header.width)
                     {
                         for (auto x = 0; x < header.width; ++x)
                         {
-                            for (auto c = 0; c < 3; ++c, ++p)
+                            for (auto c = 0; c < 3; ++c)
                             {
                                 if (!in.good())
                                     throw std::runtime_error(std::string("Error reading " + filename));
 
                                 in >> val;
                                 if (header.bytes == 2)
-                                    data[p] = clamp16(val, header.max);
+                                    data[p + (x * 3) + c] = clamp16(val, header.max);
                                 else
-                                    data[p] = clamp8(val, header.max);
+                                    data[p + (x * 3) + c] = clamp8(val, header.max);
                             }
                         }
                     }
@@ -223,28 +223,36 @@ namespace argon
                         throw std::runtime_error(std::string("Error reading " + filename + ", not enough data"));
 
                     auto byte_order = endianess();
-                    for (int p = data.size() - 1; p >= 0; --p)
+                    int p = 0;
+                    int i = data.size() - 3 * header.width;
+                    for (auto y = header.height - 1; y >= 0; --y, i -= 3 * header.width)
                     {
-                        if (!in.good())
-                            throw std::runtime_error(std::string("Error reading " + filename));
-
-                        if (header.bytes == 2)
+                        for (auto x = 0; x < header.width; ++x)
                         {
-                            std::uint8_t bytes[2];
-                            bytes[0] = binary_data[p * 2 + 0];
-                            bytes[1] = binary_data[p * 2 + 1];
-
-                            std::uint16_t *val = reinterpret_cast<std::uint16_t *>(&bytes[0]);
-                            if (byte_order == endian::LITTLE)
+                            for (auto c = 0; c < 3; ++c, ++p)
                             {
-                                *val = swap(*val);
-                            }
+                                if (!in.good())
+                                    throw std::runtime_error(std::string("Error reading " + filename));
 
-                            data[p] = clamp16(*val, header.max);
-                        }
-                        else
-                        {
-                            data[p] = clamp8(binary_data[p], header.max);
+                                if (header.bytes == 2)
+                                {
+                                    std::uint8_t bytes[2];
+                                    bytes[0] = binary_data[p * 2 + 0];
+                                    bytes[1] = binary_data[p * 2 + 1];
+
+                                    std::uint16_t *val = reinterpret_cast<std::uint16_t *>(&bytes[0]);
+                                    if (byte_order == endian::LITTLE)
+                                    {
+                                        *val = swap(*val);
+                                    }
+
+                                    data[i + (x * 3) + c] = clamp16(*val, header.max);
+                                }
+                                else
+                                {
+                                    data[i + (x * 3) + c] = clamp8(binary_data[p], header.max);
+                                }
+                            }
                         }
                     }
                 }
@@ -522,14 +530,14 @@ namespace argon
                 
                 if (!binary)
                 {
-                    auto p = 0;
-                    for (auto y = 0; y < height; ++y)
+                    int p = data.size() - 3 * width;
+                    for (auto y = height - 1; y >= 0; --y, p -= 3 * width)
                     {
                         for (auto x = 0; x < width; ++x)
                         {
-                            for (auto c = 0; c < channels; ++c, ++p)
+                            for (auto c = 0; c < channels; ++c)
                             {
-                                out << clamp16(data[p], header.max) << ' ';
+                                out << clamp16(data[p + (x * channels) + c], header.max) << ' ';
                             }
                         }
                         out << '\n';
@@ -540,24 +548,51 @@ namespace argon
                     std::vector<std::uint8_t> binary_data(width * height * channels * header.bytes);
                     auto byte_order = endianess();
 
-                    for (auto p = 0u; p < data.size(); ++p)
+                    int p = data.size() - 3 * width;
+                    int i = 0;
+                    for (auto y = height - 1; y >= 0; --y, p -= 3 * width)
                     {
-                        if (header.bytes == 2)
+                        for (auto x = 0; x < width; ++x)
                         {
-                            std::uint16_t clamped = clamp16(data[p], header.max);
-                            if (byte_order == endian::LITTLE)
-                                clamped = swap(clamped);
+                            for (auto c = 0; c < channels; ++c, ++i)
+                            {
+                                if (header.bytes == 2)
+                                {
+                                    std::uint16_t clamped = clamp16(data[p + (x * channels) + c], header.max);
+                                    if (byte_order == endian::LITTLE)
+                                        clamped = swap(clamped);
 
-                            std::uint8_t* bytes = reinterpret_cast<std::uint8_t *>(&clamped);
-                            binary_data[p * header.bytes + 0] = bytes[0];
-                            binary_data[p * header.bytes + 1] = bytes[1];
-                        }
-                        else
-                        {
-                            std::uint8_t clamped = clamp8(data[p], header.max);
-                            binary_data[p] = clamped;
+                                    std::uint8_t* bytes = reinterpret_cast<std::uint8_t *>(&clamped);
+                                    binary_data[i * header.bytes + 0] = bytes[0];
+                                    binary_data[i * header.bytes + 1] = bytes[1];
+                                }
+                                else
+                                {
+                                    std::uint8_t clamped = clamp8(data[p + (x * channels) + c], header.max);
+                                    binary_data[i] = clamped;
+                                }
+                            }
                         }
                     }
+
+                    // for (auto p = 0u; p < data.size(); ++p)
+                    // {
+                    //     if (header.bytes == 2)
+                    //     {
+                    //         std::uint16_t clamped = clamp16(data[p], header.max);
+                    //         if (byte_order == endian::LITTLE)
+                    //             clamped = swap(clamped);
+
+                    //         std::uint8_t* bytes = reinterpret_cast<std::uint8_t *>(&clamped);
+                    //         binary_data[p * header.bytes + 0] = bytes[0];
+                    //         binary_data[p * header.bytes + 1] = bytes[1];
+                    //     }
+                    //     else
+                    //     {
+                    //         std::uint8_t clamped = clamp8(data[p], header.max);
+                    //         binary_data[p] = clamped;
+                    //     }
+                    // }
 
                     std::copy(std::begin(binary_data), std::end(binary_data), std::ostreambuf_iterator<char>(out));
                 }
