@@ -44,14 +44,10 @@ TEST (image_test, write_as_pbm_test)
 TEST (image_test, pbm_test)
 {
     argon::image<int> image(20, 20);
-    image( 9, 9) = 1;
-    image(10,10) = 5;
     image( 9,10) = 5;
     image(10, 9) = 1;
 
     argon::image<int> image_clamped(20, 20);
-    image_clamped( 9, 9) = 1;
-    image_clamped(10,10) = 1;
     image_clamped( 9,10) = 1;
     image_clamped(10, 9) = 1;
  

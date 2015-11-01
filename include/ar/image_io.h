@@ -46,34 +46,35 @@ namespace argon
             }
 
             template <typename T>
-            static image<T> read_pbm( const std::string &filename )
+            static std::vector<T> read_pbm_as_vector( const std::string &filename, pbm_header &header )
             {
                 std::ifstream in(filename, std::ios::in | std::ios::binary);
                 if (!in.is_open())
                     throw std::runtime_error(std::string("Could not open " + filename));
                 
-                auto header = read_pbm_header(in);
+                header = read_pbm_header(in);
+                std::vector<T> data(header.width * header.height);
                 
-                image<T> img(header.width, header.height);
                 if (header.type == pnm_type::PBM_ASCII)
                 {
+                    int p = data.size() - header.width;
                     T val;
-                    for (int y = 0; y < img.get_height(); ++y)
+                    for (auto y = header.height - 1; y >= 0; --y, p -= header.width)
                     {
-                        for (int x = 0; x < img.get_width(); ++x)
+                        for (auto x = 0; x < header.width; ++x)
                         {
                             if (!in.good())
                                 throw std::runtime_error(std::string("Error reading " + filename));
                             
                             in >> val;
-                            img(x,y) = clamp8(val, header.max);
+                            data[p + x] = clamp8(val, header.max);
                         }
                     }
 
                 }
                 else
                 { 
-                    auto width = img.get_width();
+                    auto width = header.width;
                     int num_bits = 8;
                     int bytes_per_row = (width & 0x7) == 0 ? width / num_bits : width / num_bits + 1;
                     std::vector<std::uint8_t> binary_data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
@@ -81,29 +82,37 @@ namespace argon
                     if (binary_data.size() < static_cast<std::size_t>(header.height * bytes_per_row))
                         throw std::runtime_error(std::string("Error reading " + filename + ", not enough data"));
                      
-                    int ptr = 0;
-                    for (int y = 0; y < img.get_height(); ++y)
+                    int p = 0;
+                    int i = data.size() - header.width;
+                    for (auto y = header.height - 1; y >= 0; --y, i -= header.width)
                     {
-                        int x = 0;
-                        for (int b = 0; b < bytes_per_row; ++b)
+                        auto x = 0;
+                        for (int b = 0; b < bytes_per_row; ++b, ++p)
                         {
                             if (!in.good())
                                 throw std::runtime_error(std::string("Error reading " + filename));
 
                             int mask = 0x80;
-                            std::uint8_t packed = binary_data[ptr];
-                            for (int i = 0; i < num_bits && x < img.get_width(); ++i, ++x)
+                            std::uint8_t packed = binary_data[p];
+                            for (auto bit = 0; bit < num_bits && x < header.width; ++bit, ++x)
                             {
-                                img(x,y) = clamp8(packed & mask, header.max);
+                                data[i + x] = clamp8(packed & mask, header.max);
                                 mask = mask >> 1;
                             }
-
-                            ++ptr;
                         }
                     }
                 }
 
-                return img; 
+
+                return data; 
+            }
+
+            template <typename T>
+            static image<T> read_pbm( const std::string &filename )
+            {
+                pbm_header header;
+                auto data = read_pbm_as_vector<T>(filename, header);
+                return image<T>(header.width, header.height, 1, std::move(data));
             }
 
             template <typename T>
@@ -374,12 +383,12 @@ namespace argon
                 
                 if (!binary)
                 {
-                    auto p = 0u;
-                    for (auto y = 0; y < height; ++y)
+                    int p = data.size() - width;
+                    for (auto y = height - 1; y >= 0; --y, p -= width)
                     {
-                        for (auto x = 0; x < width; ++x, ++p)
+                        for (auto x = 0; x < width; ++x)
                         {
-                            out << clamp16(data[p], header.max) << ' ';
+                            out << clamp16(data[p + x], header.max) << ' ';
                         }
                         out << '\n';
                     }
@@ -390,26 +399,26 @@ namespace argon
                     int bytes_per_row = (width & 0x7) == 0 ? width / num_bits : width / num_bits + 1;
                     std::vector<std::uint8_t> binary_data(bytes_per_row * width);
 
-                    auto p   = 0u;
-                    auto ptr = 0u;
-                    for (auto y = 0; y < height; ++y)
+                    int p = data.size() - width;
+                    int i = 0;
+                    for (auto y = height - 1; y >= 0; --y, p -= width)
                     {
                         // Binary PBM images store each pixel as one bit,
                         // with eight pixels packed into one byte;
                         // The left-most pixel is the most significant
                         // bit in the byte.
                         auto x = 0;
-                        for (auto b = 0; b < bytes_per_row; ++b, ++ptr)
+                        for (auto b = 0; b < bytes_per_row; ++b, ++i)
                         {
                             auto shift = 7;
                             std::uint8_t packed = 0;
-                            for (auto i = 0; i < 8 && x < width; ++i, ++x, ++p)
+                            for (auto bit = 0; bit < 8 && x < width; ++bit, ++x)
                             {
-                                packed |= clamp8(data[p], header.max) << shift;
+                                packed |= clamp8(data[p + x], header.max) << shift;
                                 --shift;   
                             }
 
-                            binary_data[ptr] = packed;
+                            binary_data[i] = packed;
                         }
                     }
 
