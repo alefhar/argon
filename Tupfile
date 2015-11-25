@@ -10,13 +10,14 @@ TEST_BUILD_DIR = build/test
 
 TARGET  = argon
 VERSION = 1.0.0
-LIBNAME = lib$(TARGET).so
+LIBNAME = lib$(TARGET)
 
 : foreach $(SRC_DIR)/*.cc |> $(CC) $(CCFLAGS) -fPIC -c -o %o %f |> $(BUILD_DIR)/%B.o {obj}
 
 : foreach $(TEST_SRC_DIR)/*.cc |> $(CC) $(CCFLAGS) -c -o %o %f -lgtest |> $(TEST_BUILD_DIR)/%B.o
 
-: {obj} |> $(CC) $(CCFLAGS) -shared -o %o %f |> $(LIB_DIR)/$(LIBNAME)
+: {obj} |> $(CC) $(CCFLAGS) -shared -o %o %f |> $(LIB_DIR)/$(LIBNAME).so
+: {obj} |> ar rvs %o %f |> $(LIB_DIR)/$(LIBNAME).a
 
 : $(TEST_BUILD_DIR)/test_runner.o $(LIB_DIR)/lib$(TARGET).so |> $(CC) $(CCFLAGS) -o %o %f -lgtest -l$(TARGET) -L$(LIB_DIR) |> test_suite
 
