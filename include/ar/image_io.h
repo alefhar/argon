@@ -311,7 +311,7 @@ namespace argon
                     {
                         *val = swap(*val);
                     }
-
+                    
                     data[p] = (*val) / header.scale;
                 }
 
