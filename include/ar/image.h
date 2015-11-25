@@ -32,7 +32,7 @@ namespace argon
                 : _width{width}
                 , _height{height}
                 , _channels{channels}
-                , _data(data)
+                , _data(std::move(data))
             {}
        
             const T& operator()( int x, int y, int c = 0 ) const
