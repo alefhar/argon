@@ -1,4 +1,4 @@
-#! /bin/sh -ex
+#! /bin/sh -e
 g++ -std=c++14 -O3 -g -Wall -Wextra -pedantic -Iinclude/ -fPIC -c -o build/endian.o src/endian.cc
 g++ -std=c++14 -O3 -g -Wall -Wextra -pedantic -Iinclude/ -fPIC -c -o build/image.o src/image.cc
 g++ -std=c++14 -O3 -g -Wall -Wextra -pedantic -Iinclude/ -fPIC -c -o build/image_io.o src/image_io.cc
