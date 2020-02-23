@@ -6,7 +6,7 @@ namespace argon
     {
         if (lhs._width != rhs._width  ||
                 lhs._height != rhs._height ||
-                lhs._channels != lhs._channels)
+                lhs._channels != rhs._channels)
             return false;
 
         const std::int32_t ULP = 5;
@@ -34,7 +34,7 @@ namespace argon
     {
         if (lhs._width != rhs._width  ||
                 lhs._height != rhs._height ||
-                lhs._channels != lhs._channels)
+                lhs._channels != rhs._channels)
             return false;
 
         const std::int64_t ULP = 8;
